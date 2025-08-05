@@ -1087,6 +1087,63 @@
                             </div>
                         )}
 
+                        {selectedOption && phoneType && (
+                            <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                                <h4 className="font-bold text-purple-900 mb-3">📱 HOW TO TRACK ON YOUR PHONE</h4>
+                                
+                                {selectedOption === 'built-in-tracking' && (
+                                    <div className="text-sm text-purple-800 space-y-2">
+                                        <p className="font-medium">After setup on daughter's phone, track her on YOUR phone:</p>
+                                        {phoneType === 'iphone' && (
+                                            <div className="bg-white p-3 rounded border">
+                                                <p><strong>iPhone Parent:</strong> Open "Find My" app on your iPhone → People tab → See daughter's location live</p>
+                                                <p className="text-xs text-purple-600 mt-1">You'll get notifications when she arrives/leaves places</p>
+                                            </div>
+                                        )}
+                                        {phoneType === 'android' && (
+                                            <div className="bg-white p-3 rounded border">
+                                                <p><strong>Android Parent:</strong> Open "Family Link" app on your phone → Select daughter → See her live location</p>
+                                                <p className="text-xs text-purple-600 mt-1">Real-time location updates with mobile data</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {selectedOption === 'installed-tracker' && (
+                                    <div className="text-sm text-purple-800 space-y-2">
+                                        <p className="font-medium">After installing app on daughter's phone, track her on YOUR phone:</p>
+                                        <div className="bg-white p-3 rounded border">
+                                            <p><strong>Life360:</strong> Install Life360 app on YOUR phone → Log in with same account → See family circle with daughter's location</p>
+                                            <p><strong>Family Link:</strong> Install Family Link (parent version) on YOUR phone → See daughter's location anytime</p>
+                                            <p className="text-xs text-purple-600 mt-1">Real-time location updates sent directly to your phone every few minutes</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {selectedOption === 'browser-background' && (
+                                    <div className="text-sm text-purple-800 space-y-2">
+                                        <p className="font-medium">After setup on daughter's phone, track her on YOUR phone:</p>
+                                        <div className="bg-white p-3 rounded border">
+                                            <p><strong>Simple Method:</strong> Open this same website on YOUR phone → See daughter's location on the map</p>
+                                            <p><strong>Updates:</strong> Her location updates automatically every {trackingInterval} minutes using mobile data</p>
+                                            <p className="text-xs text-purple-600 mt-1">Just check this website on your phone anytime to see where she is</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {selectedOption === 'sms-backup' && (
+                                    <div className="text-sm text-purple-800 space-y-2">
+                                        <p className="font-medium">After setup on daughter's phone, track her on YOUR phone:</p>
+                                        <div className="bg-white p-3 rounded border">
+                                            <p><strong>Text Messages:</strong> You receive SMS texts with her location every hour</p>
+                                            <p><strong>Format:</strong> "Sarah's location: [Address] at [Time]"</p>
+                                            <p className="text-xs text-purple-600 mt-1">No app needed - location comes directly to your phone via text message</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="flex gap-2">
                             <Button 
                                 onClick={handleSetupBackgroundTracking} 
@@ -1989,6 +2046,14 @@
                                             <p className="text-green-700">
                                                 Use Background Tracking - works anywhere with mobile signal! You set everything up once on their phone, then it tracks automatically using mobile data. Perfect for school children who can't operate phones!
                                             </p>
+                                            <div className="mt-2 p-2 bg-white border rounded text-xs">
+                                                <p className="font-medium text-green-800">How it works:</p>
+                                                <p className="text-green-700">
+                                                    1. You configure daughter's phone once<br/>
+                                                    2. Her phone sends location via mobile data automatically<br/>
+                                                    3. You see her location on YOUR phone anytime
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
