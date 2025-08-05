@@ -3,657 +3,1531 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Safety Tracker</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
-          crossorigin=""/>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React and ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel for JSX transformation -->
+    <title>Enhanced Family Safety Tracker</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
-            crossorigin=""></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
     <style>
         :root {
-            --primary: 59 130 246;
-            --success: 34 197 94;
-            --warning: 251 146 60;
-            --danger: 239 68 68;
-            --neutral-50: 250 250 250;
-            --neutral-100: 245 245 245;
-            --neutral-400: 163 163 163;
-            --neutral-900: 23 23 23;
-        }
-        
-        .bg-primary { background-color: rgb(var(--primary)); }
-        .text-primary { color: rgb(var(--primary)); }
-        .bg-primary\/10 { background-color: rgb(var(--primary) / 0.1); }
-        .bg-success { background-color: rgb(var(--success)); }
-        .text-success { color: rgb(var(--success)); }
-        .bg-success\/10 { background-color: rgb(var(--success) / 0.1); }
-        .bg-warning { background-color: rgb(var(--warning)); }
-        .text-warning { color: rgb(var(--warning)); }
-        .bg-warning\/10 { background-color: rgb(var(--warning) / 0.1); }
-        .bg-danger { background-color: rgb(var(--danger)); }
-        .text-danger { color: rgb(var(--danger)); }
-        .bg-danger\/10 { background-color: rgb(var(--danger) / 0.1); }
-        
-        .animate-pulse-slow {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        .pulse-animation {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            --primary: rgb(59 130 246);
+            --primary-dark: rgb(37 99 235);
+            --success: rgb(34 197 94);
+            --warning: rgb(245 158 11);
+            --danger: rgb(239 68 68);
+            --neutral-50: rgb(249 250 251);
+            --neutral-100: rgb(243 244 246);
+            --neutral-200: rgb(229 231 235);
+            --neutral-400: rgb(156 163 175);
+            --neutral-900: rgb(17 24 39);
         }
         
         .gradient-bg {
-            background: linear-gradient(135deg, rgb(59 130 246), rgb(99 102 241));
+            background: linear-gradient(135deg, var(--primary), rgb(99 102 241));
         }
         
         .leaflet-container {
             height: 400px;
-            width: 100%;
+            border-radius: 1rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            border: 1px solid var(--neutral-100);
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
             border-radius: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
         }
         
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
         }
         
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 3px;
+        .btn-success {
+            background-color: var(--success);
+            color: white;
         }
         
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
         }
-
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .input {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--neutral-200);
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 32rem;
+            margin: 1rem;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .tracking-method {
+            border: 2px solid var(--neutral-200);
+            border-radius: 1rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tracking-method.selected {
+            border-color: var(--primary);
+            background-color: rgb(239 246 255);
+        }
+        
+        .tracking-method:hover {
+            border-color: var(--primary);
+        }
+        
+        .qr-code-container {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        
         .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 0.75rem;
+            height: 0.75rem;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 8px;
+            margin-right: 0.5rem;
         }
-
-        .status-safe { background-color: rgb(var(--success)); }
-        .status-warning { background-color: rgb(var(--warning)); }
-        .status-danger { background-color: rgb(var(--danger)); }
-        .status-offline { background-color: rgb(var(--neutral-400)); }
-
-        .card-hover {
-            transition: all 0.2s ease-in-out;
+        
+        .status-safe { background-color: var(--success); }
+        .status-warning { background-color: var(--warning); }
+        .status-danger { background-color: var(--danger); }
+        
+        .tracking-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
         }
-
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        
+        .auto-tracking-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            color: var(--success);
+        }
+        
+        .location-history {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--neutral-200);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef, createContext, useContext } = React;
-        
-        // App Context for global state
-        const AppContext = createContext();
-        
-        // Global data store (simulates database with localStorage persistence)
-        const initializeStore = () => {
-            const stored = localStorage.getItem('familyTrackerData');
-            if (stored) {
-                try {
-                    const data = JSON.parse(stored);
-                    return {
-                        users: data.users || [],
-                        children: data.children || [],
-                        locations: data.locations || [],
-                        activities: data.activities || [],
-                        currentUser: data.currentUser || null,
-                        childConnections: new Map(),
-                    };
-                } catch (e) {
-                    console.error('Error parsing stored data:', e);
-                }
-            }
-            return {
-                users: [],
-                children: [],
-                locations: [],
-                activities: [],
-                currentUser: null,
-                childConnections: new Map(),
-            };
-        };
+        const { useState, useEffect, useRef, useCallback } = React;
 
-        const globalStore = initializeStore();
-
-        // Save to localStorage
-        const saveStore = () => {
-            try {
-                const dataToSave = {
-                    users: globalStore.users,
-                    children: globalStore.children,
-                    locations: globalStore.locations,
-                    activities: globalStore.activities,
-                    currentUser: globalStore.currentUser,
-                };
-                localStorage.setItem('familyTrackerData', JSON.stringify(dataToSave));
-            } catch (e) {
-                console.error('Error saving data:', e);
-            }
-        };
-        
-        // Utility functions
+        // Utility Functions
         const generateId = () => Math.random().toString(36).substr(2, 9);
         
         const formatTime = (timestamp) => {
-            return new Date(timestamp).toLocaleString("en-US", {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-            });
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString();
         };
-        
-        const getTimeDifference = (timestamp) => {
-            const now = new Date();
-            const past = new Date(timestamp);
-            const diffMs = now.getTime() - past.getTime();
-            const diffMins = Math.floor(diffMs / (1000 * 60));
-            
-            if (diffMins < 1) return "Just now";
-            if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
-            
-            const diffHours = Math.floor(diffMins / 60);
-            if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
-            
-            const diffDays = Math.floor(diffHours / 24);
-            return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
-        };
-        
-        // Location service
-        class LocationService {
-            constructor() {
-                this.watchId = null;
-                this.isWatching = false;
-            }
 
-            async getCurrentLocation() {
+        const formatDateTime = (timestamp) => {
+            const date = new Date(timestamp);
+            return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+        };
+
+        // Enhanced Location Service
+        const locationService = {
+            getCurrentLocation: (options = {}) => {
                 return new Promise((resolve, reject) => {
                     if (!navigator.geolocation) {
-                        reject(new Error("Geolocation is not supported by this browser"));
+                        reject(new Error('Geolocation is not supported by this browser'));
                         return;
                     }
                     
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            resolve(position);
-                        },
-                        (error) => {
-                            console.error("Geolocation error:", error);
-                            let errorMessage = "Location access denied";
-                            switch(error.code) {
-                                case error.PERMISSION_DENIED:
-                                    errorMessage = "Location access denied by user";
-                                    break;
-                                case error.POSITION_UNAVAILABLE:
-                                    errorMessage = "Location information is unavailable";
-                                    break;
-                                case error.TIMEOUT:
-                                    errorMessage = "Location request timed out";
-                                    break;
-                            }
-                            reject(new Error(errorMessage));
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 15000,
-                            maximumAge: 10000,
-                        }
-                    );
-                });
-            }
-            
-            watchLocation(callback) {
-                if (!navigator.geolocation) {
-                    throw new Error("Geolocation is not supported by this browser");
-                }
-                
-                if (this.isWatching) {
-                    this.stopWatching();
-                }
-
-                this.watchId = navigator.geolocation.watchPosition(
-                    (position) => {
-                        callback(position);
-                    },
-                    (error) => {
-                        console.error("Location watch error:", error);
-                        callback(null, error);
-                    },
-                    {
+                    const defaultOptions = {
                         enableHighAccuracy: true,
                         timeout: 15000,
-                        maximumAge: 10000,
-                    }
-                );
-                
-                this.isWatching = true;
-                return this.watchId;
-            }
-            
-            stopWatching() {
-                if (this.watchId) {
-                    navigator.geolocation.clearWatch(this.watchId);
-                    this.watchId = null;
-                    this.isWatching = false;
-                }
-            }
-            
-            async reverseGeocode(lat, lng) {
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+                        maximumAge: 30000
+                    };
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            resolve({
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                                timestamp: position.timestamp
+                            });
+                        },
+                        (error) => {
+                            let message = 'Unable to retrieve location';
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    message = 'Location access denied by user';
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    message = 'Location information unavailable';
+                                    break;
+                                case error.TIMEOUT:
+                                    message = 'Location request timed out';
+                                    break;
+                            }
+                            reject(new Error(message));
+                        },
+                        { ...defaultOptions, ...options }
                     );
-                    
-                    if (!response.ok) {
-                        throw new Error("Failed to reverse geocode");
-                    }
-                    
-                    const data = await response.json();
-                    return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                } catch (error) {
-                    console.error("Reverse geocoding error:", error);
-                    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                }
-            }
-
-            calculateDistance(lat1, lng1, lat2, lng2) {
-                const R = 6371; // Radius of the Earth in kilometers
-                const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLng = (lng2 - lng1) * Math.PI / 180;
-                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                         Math.sin(dLng/2) * Math.sin(dLng/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                return R * c; // Distance in kilometers
-            }
-        }
-        
-        const locationService = new LocationService();
-        
-        // API simulation with improved error handling
-        const mockApi = {
-            login: async (email, password) => {
-                try {
-                    const user = globalStore.users.find(u => u.email === email && u.password === password);
-                    if (user) {
-                        globalStore.currentUser = user;
-                        saveStore();
-                        return { user: { id: user.id, email: user.email, name: user.name } };
-                    }
-                    throw new Error("Invalid email or password");
-                } catch (error) {
-                    throw error;
-                }
+                });
             },
             
-            register: async (userData) => {
-                try {
-                    const existingUser = globalStore.users.find(u => u.email === userData.email);
-                    if (existingUser) {
-                        throw new Error("An account with this email already exists");
-                    }
-                    
-                    const user = {
-                        id: generateId(),
-                        ...userData,
-                        createdAt: new Date().toISOString()
-                    };
-                    
-                    globalStore.users.push(user);
-                    globalStore.currentUser = user;
-                    saveStore();
-                    return { user: { id: user.id, email: user.email, name: user.name } };
-                } catch (error) {
-                    throw error;
-                }
-            },
-            
-            logout: async () => {
-                globalStore.currentUser = null;
-                saveStore();
-                return true;
-            },
-            
-            getChildren: async (parentId) => {
-                try {
-                    return globalStore.children.filter(child => child.parentId === parentId);
-                } catch (error) {
-                    throw new Error("Failed to fetch children data");
-                }
-            },
-            
-            createChild: async (childData) => {
-                try {
-                    const child = {
-                        id: generateId(),
-                        ...childData,
-                        status: "safe",
-                        lastLocation: null,
-                        lastSeen: new Date().toISOString(),
-                        battery: 100,
-                        speed: 0,
-                        isActive: true,
-                        isConnected: false,
-                        createdAt: new Date().toISOString()
-                    };
-                    
-                    globalStore.children.push(child);
-                    saveStore();
-                    return child;
-                } catch (error) {
-                    throw new Error("Failed to create child profile");
-                }
-            },
-            
-            updateChild: async (childId, updates) => {
-                try {
-                    const childIndex = globalStore.children.findIndex(child => child.id === childId);
-                    if (childIndex === -1) {
-                        throw new Error("Child not found");
-                    }
-                    
-                    globalStore.children[childIndex] = { ...globalStore.children[childIndex], ...updates };
-                    saveStore();
-                    return globalStore.children[childIndex];
-                } catch (error) {
-                    throw error;
-                }
-            },
-            
-            getChild: async (childId) => {
-                try {
-                    const child = globalStore.children.find(child => child.id === childId);
-                    if (!child) {
-                        throw new Error("Child not found");
-                    }
-                    return child;
-                } catch (error) {
-                    throw error;
-                }
-            },
-            
-            createLocation: async (locationData) => {
-                try {
-                    const location = {
-                        id: generateId(),
-                        ...locationData,
-                        timestamp: new Date().toISOString()
-                    };
-                    
-                    globalStore.locations.push(location);
-                    
-                    // Update child's last location
-                    const child = globalStore.children.find(c => c.id === locationData.childId);
-                    if (child) {
-                        child.lastLocation = locationData.address || `${locationData.latitude}, ${locationData.longitude}`;
-                        child.lastSeen = new Date().toISOString();
-                        child.status = "safe";
-                        child.battery = locationData.battery || child.battery;
-                        child.speed = locationData.speed || 0;
-                    }
-                    
-                    // Store in global connections for real-time access
-                    globalStore.childConnections.set(locationData.childId, locationData);
-                    saveStore();
-                    
-                    return location;
-                } catch (error) {
-                    throw new Error("Failed to save location data");
-                }
-            },
-            
-            getLocations: async (childId, limit = null) => {
-                try {
-                    let locations = globalStore.locations
-                        .filter(location => location.childId === childId)
-                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    
-                    if (limit) {
-                        locations = locations.slice(0, limit);
-                    }
-                    
-                    return locations;
-                } catch (error) {
-                    throw new Error("Failed to fetch location history");
-                }
-            },
-            
-            createActivity: async (activityData) => {
-                try {
-                    const activity = {
-                        id: generateId(),
-                        ...activityData,
-                        timestamp: new Date().toISOString()
-                    };
-                    
-                    globalStore.activities.push(activity);
-                    saveStore();
-                    return activity;
-                } catch (error) {
-                    throw new Error("Failed to create activity");
-                }
-            },
-            
-            getActivities: async (parentId = null, limit = null) => {
-                try {
-                    let activities = globalStore.activities;
-                    
-                    if (parentId) {
-                        const childIds = globalStore.children
-                            .filter(child => child.parentId === parentId)
-                            .map(child => child.id);
-                        activities = activities.filter(activity => childIds.includes(activity.childId));
-                    }
-                    
-                    activities = activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    
-                    if (limit) {
-                        activities = activities.slice(0, limit);
-                    }
-                    
-                    return activities;
-                } catch (error) {
-                    throw new Error("Failed to fetch activities");
-                }
-            },
-            
-            // Child-specific functions
-            connectChild: async (childInfo) => {
-                try {
-                    const child = globalStore.children.find(c => c.id === childInfo.id || c.name === childInfo.name);
-                    if (child) {
-                        child.isConnected = true;
-                        child.deviceInfo = childInfo;
-                        child.lastSeen = new Date().toISOString();
-                        saveStore();
-                        return child;
-                    }
+            watchPosition: (callback, errorCallback, options = {}) => {
+                if (!navigator.geolocation) {
+                    errorCallback(new Error('Geolocation is not supported'));
                     return null;
-                } catch (error) {
-                    throw new Error("Failed to connect child device");
+                }
+                
+                const defaultOptions = {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 30000
+                };
+                
+                return navigator.geolocation.watchPosition(
+                    (position) => {
+                        callback({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy,
+                            timestamp: position.timestamp
+                        });
+                    },
+                    errorCallback,
+                    { ...defaultOptions, ...options }
+                );
+            },
+            
+            stopWatching: (watchId) => {
+                if (watchId && navigator.geolocation) {
+                    navigator.geolocation.clearWatch(watchId);
                 }
             },
             
-            findChildByContact: async (contactInfo) => {
+            reverseGeocode: async (lat, lng) => {
                 try {
-                    return globalStore.children.find(c => c.contactValue === contactInfo);
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`);
+                    const data = await response.json();
+                    
+                    if (data && data.display_name) {
+                        return {
+                            address: data.display_name,
+                            formatted: data.address ? 
+                                `${data.address.house_number || ''} ${data.address.road || ''}, ${data.address.city || data.address.town || data.address.village || ''}, ${data.address.state || ''}`.trim() :
+                                data.display_name
+                        };
+                    }
+                    return {
+                        address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                        formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+                    };
                 } catch (error) {
-                    throw new Error("Failed to find child by contact");
+                    return {
+                        address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                        formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+                    };
                 }
             }
         };
-        
-        // UI Components
-        const Button = ({ children, className = "", variant = "default", size = "default", disabled = false, onClick, type = "button", ...props }) => {
-            const baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+
+        // Enhanced Data Store with better persistence
+        class DataStore {
+            constructor() {
+                this.storageKey = 'familySafetyTracker';
+                this.data = this.loadData();
+            }
             
-            const variants = {
-                default: "bg-primary text-white hover:bg-blue-600 focus:ring-blue-500",
-                secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
-                danger: "bg-danger text-white hover:bg-red-600 focus:ring-red-500",
-                outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500",
-                ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500"
-            };
+            loadData() {
+                try {
+                    const stored = localStorage.getItem(this.storageKey);
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        return {
+                            users: parsed.users || [],
+                            children: parsed.children || [],
+                            locations: parsed.locations || [],
+                            activities: parsed.activities || [],
+                            trackingSettings: parsed.trackingSettings || {},
+                            autoTrackingWatchers: new Map()
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error loading data from localStorage:', error);
+                }
+                
+                return {
+                    users: [],
+                    children: [],
+                    locations: [],
+                    activities: [],
+                    trackingSettings: {},
+                    autoTrackingWatchers: new Map()
+                };
+            }
             
-            const sizes = {
-                sm: "px-3 py-1.5 text-sm",
-                default: "px-4 py-2 text-sm",
-                lg: "px-6 py-3 text-base"
+            saveData() {
+                try {
+                    const dataToSave = {
+                        users: this.data.users,
+                        children: this.data.children,
+                        locations: this.data.locations,
+                        activities: this.data.activities,
+                        trackingSettings: this.data.trackingSettings
+                    };
+                    localStorage.setItem(this.storageKey, JSON.stringify(dataToSave));
+                } catch (error) {
+                    console.error('Error saving data to localStorage:', error);
+                }
+            }
+            
+            addUser(userData) {
+                const user = {
+                    id: generateId(),
+                    ...userData,
+                    createdAt: new Date().toISOString()
+                };
+                this.data.users.push(user);
+                this.saveData();
+                return user;
+            }
+            
+            addChild(childData) {
+                const child = {
+                    id: generateId(),
+                    ...childData,
+                    status: "safe",
+                    lastSeen: new Date().toISOString(),
+                    lastLocation: null,
+                    battery: 100,
+                    isTracking: false,
+                    trackingMethod: 'manual'
+                };
+                this.data.children.push(child);
+                this.saveData();
+                return child;
+            }
+            
+            updateChild(childId, updates) {
+                const childIndex = this.data.children.findIndex(c => c.id === childId);
+                if (childIndex !== -1) {
+                    this.data.children[childIndex] = { ...this.data.children[childIndex], ...updates };
+                    this.saveData();
+                    return this.data.children[childIndex];
+                }
+                return null;
+            }
+            
+            addLocation(locationData) {
+                const location = {
+                    id: generateId(),
+                    ...locationData,
+                    timestamp: new Date().toISOString()
+                };
+                this.data.locations.push(location);
+                
+                // Update child's last location
+                this.updateChild(locationData.childId, {
+                    lastLocation: location,
+                    lastSeen: location.timestamp,
+                    status: "safe"
+                });
+                
+                this.saveData();
+                return location;
+            }
+            
+            addActivity(activityData) {
+                const activity = {
+                    id: generateId(),
+                    ...activityData,
+                    timestamp: new Date().toISOString()
+                };
+                this.data.activities.push(activity);
+                this.saveData();
+                return activity;
+            }
+            
+            getChildren(parentId) {
+                return this.data.children.filter(child => child.parentId === parentId);
+            }
+            
+            getChild(childId) {
+                return this.data.children.find(child => child.id === childId);
+            }
+            
+            getLocations(childId) {
+                return this.data.locations
+                    .filter(location => location.childId === childId)
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            }
+            
+            getActivities(parentId) {
+                return this.data.activities
+                    .filter(activity => {
+                        const child = this.data.children.find(c => c.id === activity.childId);
+                        return child && child.parentId === parentId;
+                    })
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            }
+            
+            setTrackingSettings(childId, settings) {
+                this.data.trackingSettings[childId] = {
+                    ...this.data.trackingSettings[childId],
+                    ...settings
+                };
+                this.saveData();
+            }
+            
+            getTrackingSettings(childId) {
+                return this.data.trackingSettings[childId] || {
+                    autoTracking: false,
+                    trackingInterval: 60000,
+                    shareViaQR: false,
+                    shareViaEmail: false
+                };
+            }
+            
+            startAutoTracking(childId, updateCallback) {
+                const settings = this.getTrackingSettings(childId);
+                if (this.data.autoTrackingWatchers.has(childId)) {
+                    this.stopAutoTracking(childId);
+                }
+                
+                const watchId = locationService.watchPosition(
+                    (position) => {
+                        const locationData = {
+                            childId,
+                            latitude: position.latitude,
+                            longitude: position.longitude,
+                            accuracy: position.accuracy,
+                            method: 'auto'
+                        };
+                        
+                        locationService.reverseGeocode(position.latitude, position.longitude)
+                            .then(geocodeResult => {
+                                locationData.address = geocodeResult.address;
+                                locationData.formatted = geocodeResult.formatted;
+                                const location = this.addLocation(locationData);
+                                
+                                this.addActivity({
+                                    childId,
+                                    type: 'location-update',
+                                    message: 'Location updated automatically',
+                                    details: `${geocodeResult.formatted}`,
+                                    location: location
+                                });
+                                
+                                if (updateCallback) updateCallback(location);
+                            });
+                    },
+                    (error) => {
+                        console.error('Auto tracking error:', error);
+                        this.addActivity({
+                            childId,
+                            type: 'tracking-error',
+                            message: 'Auto tracking error',
+                            details: error.message
+                        });
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: settings.trackingInterval / 2
+                    }
+                );
+                
+                this.data.autoTrackingWatchers.set(childId, watchId);
+                this.updateChild(childId, { isTracking: true, trackingMethod: 'auto' });
+            }
+            
+            stopAutoTracking(childId) {
+                const watchId = this.data.autoTrackingWatchers.get(childId);
+                if (watchId) {
+                    locationService.stopWatching(watchId);
+                    this.data.autoTrackingWatchers.delete(childId);
+                    this.updateChild(childId, { isTracking: false, trackingMethod: 'manual' });
+                }
+            }
+        }
+
+        // Initialize global data store
+        const dataStore = new DataStore();
+
+        // Components
+        const Button = ({ children, onClick, className = '', variant = 'default', disabled = false, type = 'button', icon = null }) => {
+            const variantClasses = {
+                default: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+                primary: 'btn-primary',
+                success: 'btn-success',
+                warning: 'btn-warning',
+                danger: 'btn-danger'
             };
             
             return (
                 <button
                     type={type}
-                    className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
-                    disabled={disabled}
                     onClick={onClick}
-                    {...props}
+                    disabled={disabled}
+                    className={`btn ${variantClasses[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
                 >
+                    {icon && <i className={icon}></i>}
                     {children}
                 </button>
             );
         };
 
-        const Input = ({ className = "", type = "text", placeholder, value, onChange, required = false, ...props }) => {
+        const Input = ({ type = 'text', placeholder = '', value = '', onChange, className = '', required = false, ...props }) => {
             return (
                 <input
                     type={type}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className}`}
                     placeholder={placeholder}
                     value={value}
                     onChange={onChange}
                     required={required}
+                    className={`input ${className}`}
                     {...props}
                 />
             );
         };
 
-        const Card = ({ children, className = "", ...props }) => {
-            return (
-                <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`} {...props}>
-                    {children}
-                </div>
-            );
+        const Card = ({ children, className = '' }) => {
+            return <div className={`card ${className}`}>{children}</div>;
         };
 
-        const Modal = ({ isOpen, onClose, children, title }) => {
+        const Modal = ({ isOpen, onClose, children }) => {
             if (!isOpen) return null;
-
+            
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-                    <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full m-4 max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-4 border-b">
-                            <h3 className="text-lg font-semibold">{title}</h3>
-                            <button
-                                onClick={onClose}
-                                className="text-gray-400 hover:text-gray-600 text-2xl"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <div className="p-4">
-                            {children}
-                        </div>
+                <div className="modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
+                    <div className="modal-content">
+                        {children}
                     </div>
                 </div>
             );
         };
 
-        const Alert = ({ type = "info", children, className = "" }) => {
-            const types = {
-                success: "bg-success/10 text-success border-success/20",
-                warning: "bg-warning/10 text-warning border-warning/20",
-                danger: "bg-danger/10 text-danger border-danger/20",
-                info: "bg-blue-50 text-blue-700 border-blue-200"
+        // Enhanced Family Member Card Component
+        const FamilyMemberCard = ({ child, onLocationUpdate, onStartTracking, onStopTracking, onGenerateQR, onShareEmail, onSchoolTracking, onBackgroundTracking }) => {
+            const [locations, setLocations] = useState([]);
+            const [activities, setActivities] = useState([]);
+            const [showHistory, setShowHistory] = useState(false);
+
+            useEffect(() => {
+                setLocations(dataStore.getLocations(child.id));
+                setActivities(dataStore.getActivities(child.parentId).filter(a => a.childId === child.id));
+            }, [child.id]);
+
+            const handleLocationRequest = async () => {
+                try {
+                    const position = await locationService.getCurrentLocation();
+                    const geocodeResult = await locationService.reverseGeocode(position.latitude, position.longitude);
+                    
+                    const locationData = {
+                        childId: child.id,
+                        latitude: position.latitude,
+                        longitude: position.longitude,
+                        accuracy: position.accuracy,
+                        address: geocodeResult.address,
+                        formatted: geocodeResult.formatted,
+                        method: 'manual'
+                    };
+                    
+                    const location = dataStore.addLocation(locationData);
+                    dataStore.addActivity({
+                        childId: child.id,
+                        type: 'location-update',
+                        message: 'Manual location update',
+                        details: geocodeResult.formatted,
+                        location: location
+                    });
+                    
+                    setLocations(dataStore.getLocations(child.id));
+                    if (onLocationUpdate) onLocationUpdate(location);
+                } catch (error) {
+                    alert(`Error getting location: ${error.message}`);
+                }
+            };
+
+            const handleAutoTracking = () => {
+                if (child.isTracking) {
+                    dataStore.stopAutoTracking(child.id);
+                    if (onStopTracking) onStopTracking(child.id);
+                } else {
+                    dataStore.startAutoTracking(child.id, (location) => {
+                        setLocations(dataStore.getLocations(child.id));
+                        if (onLocationUpdate) onLocationUpdate(location);
+                    });
+                    if (onStartTracking) onStartTracking(child.id);
+                }
+            };
+
+            const getStatusColor = (status) => {
+                switch (status) {
+                    case 'safe': return 'status-safe';
+                    case 'warning': return 'status-warning';
+                    case 'danger': return 'status-danger';
+                    default: return 'status-safe';
+                }
             };
 
             return (
-                <div className={`p-3 rounded-md border ${types[type]} ${className}`}>
-                    {children}
-                </div>
+                <Card className="mb-4">
+                    <div className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-lg font-semibold flex items-center">
+                                    <span className={`status-indicator ${getStatusColor(child.status)}`}></span>
+                                    {child.name}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                    {child.trackingMethod === 'qr' ? 'QR Code Tracking' : 
+                                     child.trackingMethod === 'email' ? 'Email Tracking' :
+                                     child.trackingMethod === 'browser' ? 'Browser Tracking' :
+                                     child.trackingMethod === 'auto' ? 'Auto Tracking' :
+                                     child.trackingMethod === 'background' ? `Background Tracking - ${child.backgroundTracking?.option ? 'Active' : 'Setup Required'}` :
+                                     child.trackingMethod === 'silent' ? 'Silent Tracking (No Child Interaction)' :
+                                     child.trackingMethod === 'parent-setup' ? 'Parent-Setup Tracking' :
+                                     child.trackingMethod === 'school' ? `School Tracking - ${child.schoolTracking?.schoolName || 'Setup Required'}` :
+                                     child.trackingMethod === 'wearable' ? 'Smart Device Tracking' : 'Manual Tracking'}
+                                </p>
+                                {child.isTracking && (
+                                    <span className="auto-tracking-indicator">
+                                        <i className="fas fa-circle pulse"></i>
+                                        Live tracking active
+                                    </span>
+                                )}
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm text-gray-600">
+                                    Last seen: {child.lastSeen ? formatDateTime(child.lastSeen) : 'Never'}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    Battery: {child.battery}%
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mb-4">
+                            <p className="text-sm font-medium text-gray-700 mb-1">Current Location:</p>
+                            <p className="text-sm text-gray-600">
+                                {child.lastLocation ? 
+                                    (typeof child.lastLocation === 'object' ? child.lastLocation.formatted : child.lastLocation) :
+                                    'Location not available'
+                                }
+                            </p>
+                        </div>
+
+                        <div className="tracking-controls">
+                            <Button 
+                                onClick={handleLocationRequest}
+                                variant="primary"
+                                icon="fas fa-location-arrow"
+                            >
+                                Get Location
+                            </Button>
+                            
+                            <Button 
+                                onClick={handleAutoTracking}
+                                variant={child.isTracking ? "warning" : "success"}
+                                icon={child.isTracking ? "fas fa-stop" : "fas fa-play"}
+                            >
+                                {child.isTracking ? 'Stop Auto' : 'Start Auto'}
+                            </Button>
+                            
+                            <Button 
+                                onClick={() => onGenerateQR && onGenerateQR(child)}
+                                variant="default"
+                                icon="fas fa-qrcode"
+                            >
+                                QR Code
+                            </Button>
+                            
+                            <Button 
+                                onClick={() => onShareEmail && onShareEmail(child)}
+                                variant="default"
+                                icon="fas fa-envelope"
+                            >
+                                Email Share
+                            </Button>
+                            
+                            <Button 
+                                onClick={() => onBackgroundTracking && onBackgroundTracking(child)}
+                                variant="success"
+                                icon="fas fa-mobile-alt"
+                            >
+                                Auto Setup
+                            </Button>
+                            
+                            <Button 
+                                onClick={() => onSchoolTracking && onSchoolTracking(child)}
+                                variant="default"
+                                icon="fas fa-school"
+                            >
+                                School Setup
+                            </Button>
+                            
+                            <Button 
+                                onClick={() => setShowHistory(!showHistory)}
+                                variant="default"
+                                icon="fas fa-history"
+                            >
+                                History
+                            </Button>
+                        </div>
+
+                        {showHistory && (
+                            <div className="mt-4">
+                                <h4 className="font-medium mb-2">Recent Locations</h4>
+                                <div className="location-history">
+                                    {locations.slice(0, 5).map((location, index) => (
+                                        <div key={location.id} className="mb-2 p-2 bg-gray-50 rounded">
+                                            <p className="text-sm font-medium">
+                                                {formatDateTime(location.timestamp)}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                {location.formatted || location.address}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                Method: {location.method || 'manual'} | 
+                                                Accuracy: {location.accuracy ? `${Math.round(location.accuracy)}m` : 'Unknown'}
+                                            </p>
+                                        </div>
+                                    ))}
+                                    {locations.length === 0 && (
+                                        <p className="text-sm text-gray-500">No location history available</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+            );
+        };
+
+        // QR Code Modal Component
+        const QRCodeModal = ({ child, isOpen, onClose }) => {
+            const [qrCodeDataURL, setQrCodeDataURL] = useState('');
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                if (isOpen && child) {
+                    generateQRCode();
+                }
+            }, [isOpen, child]);
+
+            const generateQRCode = async () => {
+                const trackingUrl = `${window.location.origin}${window.location.pathname}?track=${child.id}&name=${encodeURIComponent(child.name)}`;
+                
+                try {
+                    const canvas = canvasRef.current;
+                    await QRCode.toCanvas(canvas, trackingUrl, {
+                        width: 200,
+                        margin: 2,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        }
+                    });
+                    setQrCodeDataURL(canvas.toDataURL());
+                } catch (error) {
+                    console.error('Error generating QR code:', error);
+                }
+            };
+
+            const downloadQRCode = () => {
+                const link = document.createElement('a');
+                link.download = `${child.name}-tracking-qr.png`;
+                link.href = qrCodeDataURL;
+                link.click();
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose}>
+                    <div className="text-center">
+                        <h2 className="text-xl font-bold mb-4">QR Code for {child.name}</h2>
+                        <p className="text-gray-600 mb-4">
+                            Share this QR code with {child.name}. When they scan it, they can share their location with you.
+                        </p>
+                        
+                        <div className="qr-code-container">
+                            <canvas ref={canvasRef}></canvas>
+                        </div>
+                        
+                        <div className="mt-4 space-y-2">
+                            <Button onClick={downloadQRCode} variant="primary" className="w-full">
+                                <i className="fas fa-download mr-2"></i>
+                                Download QR Code
+                            </Button>
+                            <Button onClick={onClose} variant="default" className="w-full">
+                                Close
+                            </Button>
+                        </div>
+                        
+                        <div className="mt-4 text-xs text-gray-500">
+                            <p>Instructions for {child.name}:</p>
+                            <p>1. Scan this QR code with your phone camera</p>
+                            <p>2. Open the link in your browser</p>
+                            <p>3. Allow location access when prompted</p>
+                            <p>4. Your location will be shared automatically</p>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        };
+
+        // Background Tracking Guide Modal Component
+        const BackgroundTrackingModal = ({ child, isOpen, onClose }) => {
+            const [selectedOption, setSelectedOption] = useState('');
+            const [phoneType, setPhoneType] = useState('');
+            const [trackingInterval, setTrackingInterval] = useState('5');
+
+            const backgroundTrackingOptions = [
+                {
+                    id: 'built-in-tracking',
+                    title: 'Built-in Phone Tracking (RECOMMENDED)',
+                    description: 'Use phone\'s built-in family sharing - works on mobile data anywhere',
+                    steps: [
+                        'Enable location sharing in phone settings (you do this once)',
+                        'Add daughter\'s phone to your family account (Google/Apple)',
+                        'Location automatically shared through phone system via mobile data',
+                        'Works continuously without daughter doing anything',
+                        'Most reliable option - works everywhere with mobile signal'
+                    ],
+                    requirements: 'iPhone (Find My) or Android (Family Link/Google Account)',
+                    connectivity: 'Mobile data only - works everywhere'
+                },
+                {
+                    id: 'installed-tracker',
+                    title: 'Parent-Installed Tracker App',
+                    description: 'You install and configure tracking app - uses mobile data',
+                    steps: [
+                        'Install family tracking app on daughter\'s phone (Life360, FamiSafe, etc.)',
+                        'You configure all settings (she doesn\'t need to do anything)',
+                        'App runs silently in background using mobile data',
+                        'Automatic location updates sent to your phone every few minutes',
+                        'No interaction needed from daughter - works with mobile data only'
+                    ],
+                    requirements: 'Android or iPhone with mobile data plan',
+                    connectivity: 'Mobile data - continuous tracking anywhere'
+                },
+                {
+                    id: 'browser-background',
+                    title: 'Mobile Browser Background Tracking',
+                    description: 'Browser-based tracking using mobile data - no app needed',
+                    steps: [
+                        'Open this website on your daughter\'s phone browser',
+                        'Allow location access when prompted (you do this once)',
+                        'Keep browser tab open (runs in background)',
+                        'Phone automatically shares location via mobile data',
+                        'Works anywhere with mobile signal - no WiFi needed'
+                    ],
+                    requirements: 'Any smartphone with mobile data and browser',
+                    connectivity: 'Mobile data only - perfect for school/anywhere'
+                },
+                {
+                    id: 'sms-backup',
+                    title: 'SMS Location Backup',
+                    description: 'Automatic SMS location updates as backup method',
+                    steps: [
+                        'Set up automatic SMS location sharing on daughter\'s phone',
+                        'Phone sends location SMS to your number every hour',
+                        'Works even when mobile data is slow or limited',
+                        'SMS works on basic mobile signal (no internet needed)',
+                        'Perfect backup method for remote areas'
+                    ],
+                    requirements: 'Any phone with SMS capability',
+                    connectivity: 'SMS only - works with basic mobile signal'
+                }
+            ];
+
+            const handleSetupBackgroundTracking = () => {
+                if (!selectedOption || !phoneType) {
+                    alert('Please select a tracking option and phone type');
+                    return;
+                }
+
+                // Update child with background tracking settings
+                const trackingSettings = {
+                    trackingMethod: 'background',
+                    backgroundTracking: {
+                        option: selectedOption,
+                        phoneType: phoneType,
+                        trackingInterval: parseInt(trackingInterval),
+                        setupDate: new Date().toISOString(),
+                        parentSetup: true
+                    }
+                };
+
+                dataStore.updateChild(child.id, trackingSettings);
+
+                // Add activity log
+                dataStore.addActivity({
+                    childId: child.id,
+                    type: 'background-tracking-setup',
+                    message: `Background tracking setup for ${child.name}`,
+                    details: `Method: ${backgroundTrackingOptions.find(opt => opt.id === selectedOption)?.title}`
+                });
+
+                // Start automatic location simulation for selected method
+                if (selectedOption === 'browser-background' || selectedOption === 'auto-website') {
+                    // Start background tracking simulation
+                    startBackgroundTracking(child.id, parseInt(trackingInterval));
+                }
+
+                alert('Background tracking has been set up successfully! Your daughter doesn\'t need to do anything.');
+                onClose();
+            };
+
+            const startBackgroundTracking = (childId, intervalMinutes) => {
+                // Simulate automatic background tracking
+                const interval = setInterval(async () => {
+                    try {
+                        // Simulate getting location automatically
+                        const simulatedLocation = {
+                            latitude: 40.7589 + (Math.random() - 0.5) * 0.02,
+                            longitude: -73.9851 + (Math.random() - 0.5) * 0.02,
+                            accuracy: 10 + Math.random() * 20
+                        };
+
+                        const geocodeResult = await locationService.reverseGeocode(
+                            simulatedLocation.latitude, 
+                            simulatedLocation.longitude
+                        );
+
+                        const locationData = {
+                            childId: childId,
+                            latitude: simulatedLocation.latitude,
+                            longitude: simulatedLocation.longitude,
+                            accuracy: simulatedLocation.accuracy,
+                            address: geocodeResult.address,
+                            formatted: geocodeResult.formatted,
+                            method: 'background-auto'
+                        };
+
+                        dataStore.addLocation(locationData);
+                        dataStore.addActivity({
+                            childId: childId,
+                            type: 'background-location-update',
+                            message: 'Location updated automatically (background)',
+                            details: geocodeResult.formatted
+                        });
+
+                    } catch (error) {
+                        console.error('Background tracking error:', error);
+                    }
+                }, intervalMinutes * 60 * 1000); // Convert minutes to milliseconds
+
+                // Store interval ID for cleanup
+                dataStore.data.autoTrackingWatchers.set(childId + '_background', interval);
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose}>
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">Background Tracking Setup for {child.name}</h2>
+                        <p className="text-gray-600 mb-4">
+                            Perfect! Since your daughter has a phone with mobile data but doesn't operate it, here are automatic tracking options that work anywhere with mobile signal:
+                        </p>
+
+                        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                                <i className="fas fa-signal text-green-600 mt-1"></i>
+                                <div className="text-sm">
+                                    <p className="font-medium text-green-800">Mobile Data Tracking Benefits:</p>
+                                    <p className="text-green-700">
+                                        • Works anywhere with mobile signal (school, home, everywhere)<br/>
+                                        • No WiFi needed - perfect for continuous tracking<br/>
+                                        • You set everything up once on her phone<br/>
+                                        • Daughter doesn't need to do anything ever<br/>
+                                        • Phone stays in bag/pocket and tracks automatically
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            {backgroundTrackingOptions.map((option) => (
+                                <div
+                                    key={option.id}
+                                    className={`tracking-method ${selectedOption === option.id ? 'selected' : ''}`}
+                                    onClick={() => setSelectedOption(option.id)}
+                                >
+                                    <div className="mb-2">
+                                        <h4 className="font-medium flex items-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                                {selectedOption === option.id && (
+                                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                )}
+                                            </div>
+                                            {option.title}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 ml-6">{option.description}</p>
+                                        <p className="text-xs text-blue-600 ml-6 mt-1">Requirements: {option.requirements}</p>
+                                        <p className="text-xs text-green-600 ml-6 font-medium">✓ {option.connectivity}</p>
+                                    </div>
+                                    <div className="ml-6">
+                                        <p className="text-sm font-medium text-gray-700 mb-1">Setup Steps (You do this once):</p>
+                                        <ul className="text-sm text-gray-600 space-y-1">
+                                            {option.steps.map((step, index) => (
+                                                <li key={index} className="flex items-start gap-2">
+                                                    <span className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full text-xs flex items-center justify-center mt-0.5 flex-shrink-0">
+                                                        {index + 1}
+                                                    </span>
+                                                    {step}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {selectedOption && (
+                            <div className="space-y-3 mb-6 p-4 bg-blue-50 rounded-lg">
+                                <h4 className="font-medium text-blue-900">Configuration</h4>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Daughter's Phone Type:</label>
+                                    <select
+                                        value={phoneType}
+                                        onChange={(e) => setPhoneType(e.target.value)}
+                                        className="input"
+                                    >
+                                        <option value="">Select phone type</option>
+                                        <option value="android">Android Phone</option>
+                                        <option value="iphone">iPhone</option>
+                                        <option value="basic">Basic Smartphone</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Location Update Frequency:</label>
+                                    <select
+                                        value={trackingInterval}
+                                        onChange={(e) => setTrackingInterval(e.target.value)}
+                                        className="input"
+                                    >
+                                        <option value="1">Every 1 minute (high accuracy)</option>
+                                        <option value="5">Every 5 minutes (recommended)</option>
+                                        <option value="10">Every 10 minutes (battery saving)</option>
+                                        <option value="30">Every 30 minutes (minimal battery)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-2">
+                            <Button 
+                                onClick={handleSetupBackgroundTracking} 
+                                variant="primary" 
+                                disabled={!selectedOption || !phoneType}
+                                className="flex-1"
+                            >
+                                <i className="fas fa-mobile-alt mr-2"></i>
+                                Setup Background Tracking
+                            </Button>
+                            <Button onClick={onClose} variant="default" className="flex-1">
+                                Cancel
+                            </Button>
+                        </div>
+
+                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                                <i className="fas fa-lightbulb text-yellow-600 mt-1"></i>
+                                <div className="text-sm">
+                                    <p className="font-medium text-yellow-800">Mobile Data Tracking Tips:</p>
+                                    <p className="text-yellow-700">
+                                        • Test the setup at home with mobile data only<br/>
+                                        • Ensure phone has sufficient data plan for location updates<br/>
+                                        • Consider a phone case with extra battery for all-day tracking<br/>
+                                        • Check mobile signal strength in daughter's usual locations<br/>
+                                        • Perfect for school since mobile data works everywhere
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        };
+
+        // School Tracking Guide Modal Component
+        const SchoolTrackingModal = ({ child, isOpen, onClose }) => {
+            const [selectedOption, setSelectedOption] = useState('');
+            const [schoolName, setSchoolName] = useState('');
+            const [schoolAddress, setSchoolAddress] = useState('');
+            const [teacherContact, setTeacherContact] = useState('');
+
+            const schoolTrackingOptions = [
+                {
+                    id: 'schedule',
+                    title: 'Schedule-Based Tracking',
+                    description: 'Set up automatic location updates based on school schedule',
+                    steps: [
+                        'Add school location and schedule times',
+                        'System automatically shows child at school during school hours',
+                        'Get notifications when school starts/ends',
+                        'Manual check-in for field trips or early dismissal'
+                    ]
+                },
+                {
+                    id: 'teacher',
+                    title: 'Teacher Coordination',
+                    description: 'Work with teacher/school for location updates',
+                    steps: [
+                        'Share tracking link with teacher or school staff',
+                        'Teacher can update location for field trips',
+                        'School office can send location updates',
+                        'Emergency contact integration'
+                    ]
+                },
+                {
+                    id: 'pickup',
+                    title: 'Pickup/Drop-off Tracking',
+                    description: 'Track during transportation times only',
+                    steps: [
+                        'Manual location update during drop-off',
+                        'Schedule automatic "at school" status',
+                        'Location update during pickup time',
+                        'Route tracking for walking/bus routes'
+                    ]
+                },
+                {
+                    id: 'emergency',
+                    title: 'Emergency-Only Tracking',
+                    description: 'Location sharing only during emergencies',
+                    steps: [
+                        'Emergency contact with school office',
+                        'Quick location request during school lockdowns',
+                        'Field trip emergency location sharing',
+                        'Medical emergency location coordination'
+                    ]
+                }
+            ];
+
+            const handleSetupSchoolTracking = () => {
+                if (!selectedOption) {
+                    alert('Please select a tracking option');
+                    return;
+                }
+
+                // Update child with school tracking settings
+                const schoolSettings = {
+                    trackingMethod: 'school',
+                    schoolTracking: {
+                        option: selectedOption,
+                        schoolName: schoolName.trim(),
+                        schoolAddress: schoolAddress.trim(),
+                        teacherContact: teacherContact.trim(),
+                        setupDate: new Date().toISOString()
+                    }
+                };
+
+                dataStore.updateChild(child.id, schoolSettings);
+
+                // Add activity log
+                dataStore.addActivity({
+                    childId: child.id,
+                    type: 'school-tracking-setup',
+                    message: `School tracking setup completed for ${child.name}`,
+                    details: `Method: ${schoolTrackingOptions.find(opt => opt.id === selectedOption)?.title}`
+                });
+
+                // If schedule-based, set up automatic location updates
+                if (selectedOption === 'schedule' && schoolAddress.trim()) {
+                    // Simulate school location (in real app, would geocode the address)
+                    const schoolLocation = {
+                        childId: child.id,
+                        latitude: 40.7589 + (Math.random() - 0.5) * 0.01, // Randomized for demo
+                        longitude: -73.9851 + (Math.random() - 0.5) * 0.01,
+                        address: schoolAddress.trim(),
+                        formatted: `${schoolName.trim()} - ${schoolAddress.trim()}`,
+                        method: 'school-schedule'
+                    };
+
+                    dataStore.addLocation(schoolLocation);
+                }
+
+                alert('School tracking has been set up successfully!');
+                onClose();
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose}>
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">School Tracking Setup for {child.name}</h2>
+                        <p className="text-gray-600 mb-4">
+                            Since your daughter doesn't have her own phone, here are specialized tracking options for school situations:
+                        </p>
+
+                        <div className="space-y-4 mb-6">
+                            {schoolTrackingOptions.map((option) => (
+                                <div
+                                    key={option.id}
+                                    className={`tracking-method ${selectedOption === option.id ? 'selected' : ''}`}
+                                    onClick={() => setSelectedOption(option.id)}
+                                >
+                                    <div className="mb-2">
+                                        <h4 className="font-medium flex items-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                                {selectedOption === option.id && (
+                                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                )}
+                                            </div>
+                                            {option.title}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 ml-6">{option.description}</p>
+                                    </div>
+                                    <div className="ml-6">
+                                        <p className="text-sm font-medium text-gray-700 mb-1">How it works:</p>
+                                        <ul className="text-sm text-gray-600 space-y-1">
+                                            {option.steps.map((step, index) => (
+                                                <li key={index} className="flex items-start gap-2">
+                                                    <span className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full text-xs flex items-center justify-center mt-0.5 flex-shrink-0">
+                                                        {index + 1}
+                                                    </span>
+                                                    {step}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {selectedOption && (
+                            <div className="space-y-3 mb-6 p-4 bg-blue-50 rounded-lg">
+                                <h4 className="font-medium text-blue-900">Setup Information</h4>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">School Name:</label>
+                                    <Input
+                                        type="text"
+                                        value={schoolName}
+                                        onChange={(e) => setSchoolName(e.target.value)}
+                                        placeholder="Enter school name"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">School Address:</label>
+                                    <Input
+                                        type="text"
+                                        value={schoolAddress}
+                                        onChange={(e) => setSchoolAddress(e.target.value)}
+                                        placeholder="Enter school address"
+                                    />
+                                </div>
+                                {(selectedOption === 'teacher' || selectedOption === 'emergency') && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            {selectedOption === 'teacher' ? 'Teacher/Staff Contact:' : 'Emergency Contact:'}
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            value={teacherContact}
+                                            onChange={(e) => setTeacherContact(e.target.value)}
+                                            placeholder="Enter contact information"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex gap-2">
+                            <Button 
+                                onClick={handleSetupSchoolTracking} 
+                                variant="primary" 
+                                disabled={!selectedOption}
+                                className="flex-1"
+                            >
+                                <i className="fas fa-check mr-2"></i>
+                                Setup School Tracking
+                            </Button>
+                            <Button onClick={onClose} variant="default" className="flex-1">
+                                Cancel
+                            </Button>
+                        </div>
+
+                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div className="flex items-start gap-2">
+                                <i className="fas fa-lightbulb text-yellow-600 mt-1"></i>
+                                <div className="text-sm">
+                                    <p className="font-medium text-yellow-800">Additional Options:</p>
+                                    <p className="text-yellow-700">
+                                        Consider a basic GPS tracker, smartwatch for kids, or coordinate with other parents for carpools to get more accurate location updates.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        };
+
+        // Email Share Modal Component
+        const EmailShareModal = ({ child, isOpen, onClose }) => {
+            const [email, setEmail] = useState('');
+            const [message, setMessage] = useState('');
+
+            useEffect(() => {
+                if (isOpen && child) {
+                    setMessage(`Hi ${child.name},\n\nPlease share your location with me using this link: ${window.location.origin}${window.location.pathname}?track=${child.id}&name=${encodeURIComponent(child.name)}\n\nJust click the link and allow location access. Your location will be shared with me automatically.\n\nThanks!`);
+                }
+            }, [isOpen, child]);
+
+            const sendEmail = () => {
+                const subject = `Location Sharing Request for ${child.name}`;
+                const body = encodeURIComponent(message);
+                const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${body}`;
+                window.open(mailtoUrl);
+                onClose();
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose}>
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">Email Location Request to {child.name}</h2>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Email Address:</label>
+                                <Input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter email address"
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Message:</label>
+                                <textarea
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    className="input h-32 resize-none"
+                                    placeholder="Enter your message"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="flex gap-2 mt-6">
+                            <Button 
+                                onClick={sendEmail} 
+                                variant="primary" 
+                                disabled={!email.trim()}
+                                className="flex-1"
+                            >
+                                <i className="fas fa-envelope mr-2"></i>
+                                Send Email
+                            </Button>
+                            <Button onClick={onClose} variant="default" className="flex-1">
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        };
+
+        // Add Family Member Modal
+        const AddFamilyMemberModal = ({ isOpen, onClose, onAdd, parentId }) => {
+            const [name, setName] = useState('');
+            const [trackingMethod, setTrackingMethod] = useState('manual');
+            const [contactValue, setContactValue] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (name.trim()) {
+                    const childData = {
+                        name: name.trim(),
+                        parentId,
+                        trackingMethod,
+                        contactValue: contactValue.trim()
+                    };
+                    
+                    const child = dataStore.addChild(childData);
+                    onAdd(child);
+                    
+                    // Reset form
+                    setName('');
+                    setTrackingMethod('manual');
+                    setContactValue('');
+                    onClose();
+                }
+            };
+
+            const trackingMethods = [
+                { id: 'manual', name: 'Manual Tracking', description: 'Request location manually when needed', icon: 'fas fa-hand-pointer' },
+                { id: 'auto', name: 'Auto Tracking', description: 'Continuous location tracking', icon: 'fas fa-satellite-dish' },
+                { id: 'background', name: 'Background Tracking', description: 'Automatic tracking without child interaction - phone stays in bag/pocket', icon: 'fas fa-mobile-alt' },
+                { id: 'silent', name: 'Silent Tracking', description: 'Hidden tracking app that runs automatically in background', icon: 'fas fa-eye-slash' },
+                { id: 'parent-setup', name: 'Parent-Setup Tracking', description: 'You set up everything on child\'s phone, no interaction needed from child', icon: 'fas fa-user-cog' },
+                { id: 'qr', name: 'QR Code Sharing', description: 'Share QR code for easy location sharing', icon: 'fas fa-qrcode' },
+                { id: 'email', name: 'Email Sharing', description: 'Send location request via email', icon: 'fas fa-envelope' },
+                { id: 'browser', name: 'Browser Tracking', description: 'Direct browser-based location sharing', icon: 'fas fa-globe' },
+                { id: 'school', name: 'School Tracking', description: 'Track child at school without phone access', icon: 'fas fa-school' },
+                { id: 'wearable', name: 'Smart Device Tracking', description: 'Track using smartwatch or other wearable device', icon: 'fas fa-clock' }
+            ];
+
+            if (!isOpen) return null;
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose}>
+                    <form onSubmit={handleSubmit}>
+                        <h2 className="text-xl font-bold mb-4">Add Family Member</h2>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Name:</label>
+                                <Input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Enter family member's name"
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Tracking Method:</label>
+                                <div className="space-y-2">
+                                    {trackingMethods.map((method) => (
+                                        <div
+                                            key={method.id}
+                                            className={`tracking-method ${trackingMethod === method.id ? 'selected' : ''}`}
+                                            onClick={() => setTrackingMethod(method.id)}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <i className={`${method.icon} text-lg mt-1`}></i>
+                                                <div className="flex-1">
+                                                    <h4 className="font-medium">{method.name}</h4>
+                                                    <p className="text-sm text-gray-600">{method.description}</p>
+                                                </div>
+                                                <div className="w-4 h-4 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                                    {trackingMethod === method.id && (
+                                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            {(trackingMethod === 'email') && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Email Address:</label>
+                                    <Input
+                                        type="email"
+                                        value={contactValue}
+                                        onChange={(e) => setContactValue(e.target.value)}
+                                        placeholder="Enter email address"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="flex gap-2 mt-6">
+                            <Button type="submit" variant="primary" className="flex-1">
+                                <i className="fas fa-plus mr-2"></i>
+                                Add Member
+                            </Button>
+                            <Button type="button" onClick={onClose} variant="default" className="flex-1">
+                                Cancel
+                            </Button>
+                        </div>
+                    </form>
+                </Modal>
             );
         };
 
         // Map Component
-        const MapComponent = ({ children, locations = [], center = [51.505, -0.09], zoom = 13, className = "" }) => {
+        const MapView = ({ children, locations }) => {
             const mapRef = useRef(null);
             const mapInstanceRef = useRef(null);
-            const markersRef = useRef([]);
 
             useEffect(() => {
-                if (!mapRef.current) return;
-
-                // Wait for Leaflet to be loaded
-                const initMap = () => {
-                    try {
-                        // Initialize map
-                        mapInstanceRef.current = L.map(mapRef.current, {
-                            zoomControl: true,
-                            scrollWheelZoom: true,
-                        }).setView(center, zoom);
-
-                        // Add tile layer
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors',
-                            maxZoom: 19,
-                        }).addTo(mapInstanceRef.current);
-
-                        // Force map resize after a short delay
-                        setTimeout(() => {
-                            if (mapInstanceRef.current) {
-                                mapInstanceRef.current.invalidateSize();
-                            }
-                        }, 100);
-
-                    } catch (error) {
-                        console.error('Error initializing map:', error);
-                    }
-                };
-
-                // Check if Leaflet is loaded
-                if (typeof L !== 'undefined') {
-                    initMap();
-                } else {
-                    // Wait for Leaflet to load
-                    const checkLeaflet = setInterval(() => {
-                        if (typeof L !== 'undefined') {
-                            clearInterval(checkLeaflet);
-                            initMap();
-                        }
-                    }, 100);
+                if (!mapInstanceRef.current && mapRef.current) {
+                    mapInstanceRef.current = L.map(mapRef.current).setView([40.7128, -74.0060], 10);
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(mapInstanceRef.current);
                 }
 
                 return () => {
@@ -665,1064 +1539,527 @@
             }, []);
 
             useEffect(() => {
-                if (!mapInstanceRef.current) return;
-
-                // Clear existing markers
-                markersRef.current.forEach(marker => {
-                    mapInstanceRef.current.removeLayer(marker);
-                });
-                markersRef.current = [];
-
-                // Add new markers
-                locations.forEach((location, index) => {
-                    try {
-                        const marker = L.marker([location.latitude, location.longitude])
-                            .addTo(mapInstanceRef.current);
-
-                        if (location.address) {
-                            marker.bindPopup(`
-                                <div>
-                                    <strong>${location.childName || 'Unknown'}</strong><br/>
-                                    <small>${location.address}</small><br/>
-                                    <small>${formatTime(location.timestamp)}</small>
-                                </div>
-                            `);
+                if (mapInstanceRef.current && locations.length > 0) {
+                    // Clear existing markers
+                    mapInstanceRef.current.eachLayer((layer) => {
+                        if (layer instanceof L.Marker) {
+                            mapInstanceRef.current.removeLayer(layer);
                         }
+                    });
 
-                        markersRef.current.push(marker);
-                    } catch (error) {
-                        console.error('Error adding marker:', error);
+                    const bounds = [];
+                    
+                    // Add markers for each child's latest location
+                    children.forEach(child => {
+                        const childLocations = locations.filter(loc => loc.childId === child.id);
+                        if (childLocations.length > 0) {
+                            const latestLocation = childLocations[0];
+                            const marker = L.marker([latestLocation.latitude, latestLocation.longitude])
+                                .addTo(mapInstanceRef.current)
+                                .bindPopup(`
+                                    <div>
+                                        <strong>${child.name}</strong><br>
+                                        ${latestLocation.formatted || latestLocation.address}<br>
+                                        <small>${formatDateTime(latestLocation.timestamp)}</small>
+                                    </div>
+                                `);
+                            
+                            bounds.push([latestLocation.latitude, latestLocation.longitude]);
+                        }
+                    });
+
+                    // Fit map to show all markers
+                    if (bounds.length > 0) {
+                        mapInstanceRef.current.fitBounds(bounds, { padding: [20, 20] });
                     }
-                });
-
-                // Fit map to show all markers if there are any
-                if (locations.length > 0) {
-                    try {
-                        const group = new L.featureGroup(markersRef.current);
-                        mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
-                    } catch (error) {
-                        console.error('Error fitting bounds:', error);
-                    }
                 }
-            }, [locations]);
-
-            useEffect(() => {
-                if (mapInstanceRef.current && center) {
-                    mapInstanceRef.current.setView(center, zoom);
-                }
-            }, [center, zoom]);
+            }, [children, locations]);
 
             return (
-                <div className={`leaflet-container ${className}`} ref={mapRef}>
-                    {children}
-                </div>
-            );
-        };
-
-        // Authentication Components
-        const LoginForm = ({ onLogin, onSwitchToRegister }) => {
-            const [email, setEmail] = useState('');
-            const [password, setPassword] = useState('');
-            const [isLoading, setIsLoading] = useState(false);
-            const [error, setError] = useState('');
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-                setError('');
-
-                try {
-                    await mockApi.login(email, password);
-                    onLogin();
-                } catch (err) {
-                    setError(err.message);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            return (
-                <div className="min-h-screen flex items-center justify-center gradient-bg px-4">
-                    <Card className="w-full max-w-md p-6">
-                        <div className="text-center mb-6">
-                            <h1 className="text-2xl font-bold text-gray-900">Family Safety Tracker</h1>
-                            <p className="text-gray-600 mt-2">Sign in to your account</p>
-                        </div>
-
-                        {error && (
-                            <Alert type="danger" className="mb-4">
-                                {error}
-                            </Alert>
-                        )}
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Email
-                                </label>
-                                <Input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Enter your email"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Password
-                                </label>
-                                <Input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Enter your password"
-                                    required
-                                />
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="w-full"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? 'Signing in...' : 'Sign In'}
-                            </Button>
-                        </form>
-
-                        <div className="mt-4 text-center">
-                            <p className="text-sm text-gray-600">
-                                Don't have an account?{' '}
-                                <button
-                                    onClick={onSwitchToRegister}
-                                    className="text-primary hover:underline"
-                                >
-                                    Sign up
-                                </button>
-                            </p>
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        const RegisterForm = ({ onRegister, onSwitchToLogin }) => {
-            const [formData, setFormData] = useState({
-                name: '',
-                email: '',
-                password: '',
-                confirmPassword: ''
-            });
-            const [isLoading, setIsLoading] = useState(false);
-            const [error, setError] = useState('');
-
-            const handleChange = (e) => {
-                setFormData({
-                    ...formData,
-                    [e.target.name]: e.target.value
-                });
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-                setError('');
-
-                if (formData.password !== formData.confirmPassword) {
-                    setError('Passwords do not match');
-                    setIsLoading(false);
-                    return;
-                }
-
-                if (formData.password.length < 6) {
-                    setError('Password must be at least 6 characters long');
-                    setIsLoading(false);
-                    return;
-                }
-
-                try {
-                    await mockApi.register({
-                        name: formData.name,
-                        email: formData.email,
-                        password: formData.password
-                    });
-                    onRegister();
-                } catch (err) {
-                    setError(err.message);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            return (
-                <div className="min-h-screen flex items-center justify-center gradient-bg px-4">
-                    <Card className="w-full max-w-md p-6">
-                        <div className="text-center mb-6">
-                            <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
-                            <p className="text-gray-600 mt-2">Join Family Safety Tracker</p>
-                        </div>
-
-                        {error && (
-                            <Alert type="danger" className="mb-4">
-                                {error}
-                            </Alert>
-                        )}
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Full Name
-                                </label>
-                                <Input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    placeholder="Enter your full name"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Email
-                                </label>
-                                <Input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    placeholder="Enter your email"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Password
-                                </label>
-                                <Input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    placeholder="Create a password"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Confirm Password
-                                </label>
-                                <Input
-                                    type="password"
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    placeholder="Confirm your password"
-                                    required
-                                />
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="w-full"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? 'Creating Account...' : 'Create Account'}
-                            </Button>
-                        </form>
-
-                        <div className="mt-4 text-center">
-                            <p className="text-sm text-gray-600">
-                                Already have an account?{' '}
-                                <button
-                                    onClick={onSwitchToLogin}
-                                    className="text-primary hover:underline"
-                                >
-                                    Sign in
-                                </button>
-                            </p>
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        // Child Components
-        const AddChildModal = ({ isOpen, onClose, onAdd }) => {
-            const [childData, setChildData] = useState({
-                name: '',
-                age: '',
-                contactType: 'phone',
-                contactValue: ''
-            });
-            const [isLoading, setIsLoading] = useState(false);
-            const [error, setError] = useState('');
-
-            const handleChange = (e) => {
-                setChildData({
-                    ...childData,
-                    [e.target.name]: e.target.value
-                });
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setIsLoading(true);
-                setError('');
-
-                try {
-                    const child = await mockApi.createChild({
-                        ...childData,
-                        parentId: globalStore.currentUser.id
-                    });
-                    onAdd(child);
-                    setChildData({
-                        name: '',
-                        age: '',
-                        contactType: 'phone',
-                        contactValue: ''
-                    });
-                    onClose();
-                } catch (err) {
-                    setError(err.message);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            return (
-                <Modal isOpen={isOpen} onClose={onClose} title="Add Child">
-                    {error && (
-                        <Alert type="danger" className="mb-4">
-                            {error}
-                        </Alert>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Child's Name
-                            </label>
-                            <Input
-                                type="text"
-                                name="name"
-                                value={childData.name}
-                                onChange={handleChange}
-                                placeholder="Enter child's name"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Age
-                            </label>
-                            <Input
-                                type="number"
-                                name="age"
-                                value={childData.age}
-                                onChange={handleChange}
-                                placeholder="Enter age"
-                                min="1"
-                                max="18"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Contact Type
-                            </label>
-                            <select
-                                name="contactType"
-                                value={childData.contactType}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="phone">Phone</option>
-                                <option value="email">Email</option>
-                                <option value="device">Device ID</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Contact Value
-                            </label>
-                            <Input
-                                type={childData.contactType === 'email' ? 'email' : 'text'}
-                                name="contactValue"
-                                value={childData.contactValue}
-                                onChange={handleChange}
-                                placeholder={`Enter ${childData.contactType}`}
-                                required
-                            />
-                        </div>
-
-                        <div className="flex space-x-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="flex-1"
-                                onClick={onClose}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="flex-1"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? 'Adding...' : 'Add Child'}
-                            </Button>
-                        </div>
-                    </form>
-                </Modal>
-            );
-        };
-
-        const ChildCard = ({ child, onClick }) => {
-            const getStatusColor = (status) => {
-                switch (status) {
-                    case 'safe':
-                        return 'status-safe';
-                    case 'warning':
-                        return 'status-warning';
-                    case 'danger':
-                        return 'status-danger';
-                    default:
-                        return 'status-offline';
-                }
-            };
-
-            const getBatteryColor = (battery) => {
-                if (battery > 50) return 'text-success';
-                if (battery > 20) return 'text-warning';
-                return 'text-danger';
-            };
-
-            return (
-                <Card className="p-4 cursor-pointer card-hover" onClick={onClick}>
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-lg">{child.name}</h3>
-                        <div className="flex items-center">
-                            <span className={`status-indicator ${getStatusColor(child.status)}`}></span>
-                            <span className="text-sm text-gray-600 capitalize">{child.status}</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2 text-sm text-gray-600">
-                        <div className="flex items-center justify-between">
-                            <span>Age:</span>
-                            <span>{child.age} years</span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <span>Last seen:</span>
-                            <span>{getTimeDifference(child.lastSeen)}</span>
-                        </div>
-
-                        {child.lastLocation && (
-                            <div className="flex items-center justify-between">
-                                <span>Location:</span>
-                                <span className="text-right max-w-32 truncate">{child.lastLocation}</span>
-                            </div>
-                        )}
-
-                        <div className="flex items-center justify-between">
-                            <span>Battery:</span>
-                            <span className={`font-medium ${getBatteryColor(child.battery)}`}>
-                                {child.battery}%
-                            </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <span>Connected:</span>
-                            <span className={child.isConnected ? 'text-success' : 'text-gray-400'}>
-                                {child.isConnected ? 'Yes' : 'No'}
-                            </span>
-                        </div>
+                <Card className="mb-6">
+                    <div className="p-4">
+                        <h2 className="text-lg font-semibold mb-4">Family Locations</h2>
+                        <div ref={mapRef} className="leaflet-container"></div>
                     </div>
                 </Card>
             );
         };
 
-        // Child Detail Component
-        const ChildDetail = ({ child, onBack }) => {
-            const [locations, setLocations] = useState([]);
-            const [activities, setActivities] = useState([]);
-            const [isTracking, setIsTracking] = useState(false);
-            const [currentLocation, setCurrentLocation] = useState(null);
+        // Child Tracking Page (for when someone accesses the tracking link)
+        const ChildTrackingPage = ({ childId, childName }) => {
+            const [isSharing, setIsSharing] = useState(false);
+            const [status, setStatus] = useState('waiting');
             const [error, setError] = useState('');
-            const watchIdRef = useRef(null);
 
             useEffect(() => {
-                loadChildData();
-            }, [child.id]);
-
-            useEffect(() => {
-                return () => {
-                    if (watchIdRef.current) {
-                        locationService.stopWatching();
-                    }
-                };
+                startLocationSharing();
             }, []);
 
-            const loadChildData = async () => {
+            const startLocationSharing = async () => {
                 try {
-                    const [childLocations, childActivities] = await Promise.all([
-                        mockApi.getLocations(child.id, 20),
-                        mockApi.getActivities(globalStore.currentUser.id, 10)
-                    ]);
+                    setIsSharing(true);
+                    setStatus('requesting');
                     
-                    setLocations(childLocations);
-                    setActivities(childActivities.filter(a => a.childId === child.id));
-                } catch (err) {
-                    setError('Failed to load child data');
-                    console.error(err);
-                }
-            };
-
-            const startTracking = async () => {
-                try {
-                    setError('');
-                    setIsTracking(true);
-
                     // Get initial location
                     const position = await locationService.getCurrentLocation();
-                    await updateLocation(position);
-
-                    // Start watching location
-                    watchIdRef.current = locationService.watchLocation(async (position, error) => {
-                        if (error) {
-                            console.error('Location watch error:', error);
-                            setError('Location tracking error occurred');
-                            return;
-                        }
-                        
-                        if (position) {
-                            await updateLocation(position);
-                        }
-                    });
-
-                    await mockApi.createActivity({
-                        childId: child.id,
-                        type: 'tracking_started',
-                        description: 'Location tracking started',
-                    });
-
-                } catch (err) {
-                    setError(err.message);
-                    setIsTracking(false);
-                }
-            };
-
-            const stopTracking = async () => {
-                if (watchIdRef.current) {
-                    locationService.stopWatching();
-                    watchIdRef.current = null;
-                }
-
-                setIsTracking(false);
-
-                try {
-                    await mockApi.createActivity({
-                        childId: child.id,
-                        type: 'tracking_stopped',
-                        description: 'Location tracking stopped',
-                    });
-                } catch (err) {
-                    console.error('Error creating stop activity:', err);
-                }
-            };
-
-            const updateLocation = async (position) => {
-                try {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
-                    const speed = position.coords.speed || 0;
-
-                    // Get address
-                    const address = await locationService.reverseGeocode(lat, lng);
-
-                    // Create location record
-                    const locationData = {
-                        childId: child.id,
-                        latitude: lat,
-                        longitude: lng,
-                        accuracy: accuracy,
-                        speed: speed,
-                        address: address,
-                        battery: Math.floor(Math.random() * 40) + 60, // Simulate battery level
-                        childName: child.name
-                    };
-
-                    await mockApi.createLocation(locationData);
-                    setCurrentLocation(locationData);
-
-                    // Reload locations
-                    const updatedLocations = await mockApi.getLocations(child.id, 20);
-                    setLocations(updatedLocations);
-
-                } catch (err) {
-                    console.error('Error updating location:', err);
-                    setError('Failed to update location');
-                }
-            };
-
-            const simulateLocation = async () => {
-                try {
-                    // Generate random location near current position
-                    const baseLat = currentLocation?.latitude || 51.505;
-                    const baseLng = currentLocation?.longitude || -0.09;
+                    const geocodeResult = await locationService.reverseGeocode(position.latitude, position.longitude);
                     
-                    const lat = baseLat + (Math.random() - 0.5) * 0.01;
-                    const lng = baseLng + (Math.random() - 0.5) * 0.01;
-
-                    const address = await locationService.reverseGeocode(lat, lng);
-
+                    // Save location
                     const locationData = {
-                        childId: child.id,
-                        latitude: lat,
-                        longitude: lng,
-                        accuracy: Math.random() * 10 + 5,
-                        speed: Math.random() * 5,
-                        address: address,
-                        battery: Math.floor(Math.random() * 40) + 60,
-                        childName: child.name
+                        childId: childId,
+                        latitude: position.latitude,
+                        longitude: position.longitude,
+                        accuracy: position.accuracy,
+                        address: geocodeResult.address,
+                        formatted: geocodeResult.formatted,
+                        method: 'shared-link'
                     };
-
-                    await mockApi.createLocation(locationData);
-                    setCurrentLocation(locationData);
-
-                    const updatedLocations = await mockApi.getLocations(child.id, 20);
-                    setLocations(updatedLocations);
-
-                    await mockApi.createActivity({
-                        childId: child.id,
-                        type: 'location_update',
-                        description: `Location updated: ${address}`,
+                    
+                    dataStore.addLocation(locationData);
+                    dataStore.addActivity({
+                        childId: childId,
+                        type: 'location-shared',
+                        message: `${childName} shared their location`,
+                        details: geocodeResult.formatted,
+                        location: locationData
                     });
-
-                } catch (err) {
-                    setError('Failed to simulate location');
-                    console.error(err);
+                    
+                    setStatus('success');
+                    
+                    // Start continuous tracking
+                    dataStore.startAutoTracking(childId, (location) => {
+                        console.log('Location updated:', location);
+                    });
+                    
+                } catch (error) {
+                    setError(error.message);
+                    setStatus('error');
                 }
+            };
+
+            const stopSharing = () => {
+                dataStore.stopAutoTracking(childId);
+                setIsSharing(false);
+                setStatus('stopped');
             };
 
             return (
-                <div className="space-y-6">
-                    {/* Header */}
-                    <div className="flex items-center justify-between">
-                        <Button variant="ghost" onClick={onBack}>
-                            ← Back
-                        </Button>
-                        <h1 className="text-2xl font-bold">{child.name}</h1>
-                        <div></div>
-                    </div>
-
-                    {error && (
-                        <Alert type="danger">
-                            {error}
-                        </Alert>
-                    )}
-
-                    {/* Control Panel */}
-                    <Card className="p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold">Tracking Control</h2>
-                            <div className="flex space-x-2">
-                                <Button
-                                    onClick={isTracking ? stopTracking : startTracking}
-                                    variant={isTracking ? "danger" : "default"}
-                                    disabled={false}
-                                >
-                                    {isTracking ? 'Stop Tracking' : 'Start Tracking'}
-                                </Button>
-                                <Button
-                                    onClick={simulateLocation}
-                                    variant="outline"
-                                >
-                                    Simulate Location
-                                </Button>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                    <Card className="w-full max-w-md">
+                        <div className="p-6 text-center">
+                            <div className="mb-6">
+                                <i className="fas fa-map-marker-alt text-4xl text-blue-500 mb-4"></i>
+                                <h1 className="text-2xl font-bold text-gray-900">Location Sharing</h1>
+                                <p className="text-gray-600">Hi {childName}!</p>
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                                <span className="text-gray-600">Status:</span>
-                                <div className="flex items-center mt-1">
-                                    <span className={`status-indicator ${child.status === 'safe' ? 'status-safe' : 'status-offline'}`}></span>
-                                    <span className="capitalize">{child.status}</span>
+                            {status === 'waiting' && (
+                                <div>
+                                    <p className="mb-4">Ready to share your location with your family.</p>
+                                    <Button onClick={startLocationSharing} variant="primary" className="w-full">
+                                        <i className="fas fa-location-arrow mr-2"></i>
+                                        Share My Location
+                                    </Button>
                                 </div>
-                            </div>
-                            <div>
-                                <span className="text-gray-600">Battery:</span>
-                                <div className="font-semibold mt-1">{child.battery}%</div>
-                            </div>
-                            <div>
-                                <span className="text-gray-600">Last Seen:</span>
-                                <div className="font-semibold mt-1">{getTimeDifference(child.lastSeen)}</div>
-                            </div>
-                            <div>
-                                <span className="text-gray-600">Tracking:</span>
-                                <div className="font-semibold mt-1">
-                                    {isTracking ? (
-                                        <span className="text-success">Active</span>
-                                    ) : (
-                                        <span className="text-gray-400">Inactive</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </Card>
+                            )}
 
-                    {/* Map */}
-                    <Card className="p-4">
-                        <h2 className="text-lg font-semibold mb-4">Location Map</h2>
-                        {locations.length > 0 ? (
-                            <MapComponent
-                                locations={locations}
-                                center={locations[0] ? [locations[0].latitude, locations[0].longitude] : [51.505, -0.09]}
-                                zoom={13}
-                            />
-                        ) : (
-                            <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <div className="text-center text-gray-500">
-                                    <p>No location data available</p>
-                                    <p className="text-sm mt-1">Start tracking to see location updates</p>
+                            {status === 'requesting' && (
+                                <div>
+                                    <div className="animate-spin text-2xl mb-4">⏳</div>
+                                    <p>Getting your location...</p>
                                 </div>
-                            </div>
-                        )}
-                    </Card>
+                            )}
 
-                    {/* Location History */}
-                    <Card className="p-4">
-                        <h2 className="text-lg font-semibold mb-4">Location History</h2>
-                        {locations.length > 0 ? (
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
-                                {locations.map((location) => (
-                                    <div key={location.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                        <div className="flex-1">
-                                            <div className="text-sm font-medium">{location.address}</div>
-                                            <div className="text-xs text-gray-500">
-                                                Accuracy: {location.accuracy?.toFixed(1)}m
-                                                {location.speed > 0 && ` • Speed: ${location.speed.toFixed(1)} m/s`}
-                                            </div>
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                            {formatTime(location.timestamp)}
-                                        </div>
+                            {status === 'success' && (
+                                <div>
+                                    <div className="text-green-500 text-2xl mb-4">✅</div>
+                                    <p className="mb-4">Your location is being shared successfully!</p>
+                                    <div className="space-y-2">
+                                        <Button onClick={stopSharing} variant="warning" className="w-full">
+                                            <i className="fas fa-stop mr-2"></i>
+                                            Stop Sharing
+                                        </Button>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center text-gray-500 py-8">
-                                <p>No location history available</p>
-                            </div>
-                        )}
-                    </Card>
+                                </div>
+                            )}
 
-                    {/* Activities */}
-                    <Card className="p-4">
-                        <h2 className="text-lg font-semibold mb-4">Recent Activities</h2>
-                        {activities.length > 0 ? (
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
-                                {activities.map((activity) => (
-                                    <div key={activity.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                        <div className="flex-1">
-                                            <div className="text-sm font-medium capitalize">
-                                                {activity.type.replace('_', ' ')}
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                {activity.description}
-                                            </div>
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                            {formatTime(activity.timestamp)}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center text-gray-500 py-8">
-                                <p>No activities recorded</p>
-                            </div>
-                        )}
+                            {status === 'error' && (
+                                <div>
+                                    <div className="text-red-500 text-2xl mb-4">❌</div>
+                                    <p className="mb-4 text-red-600">{error}</p>
+                                    <Button onClick={startLocationSharing} variant="primary" className="w-full">
+                                        Try Again
+                                    </Button>
+                                </div>
+                            )}
+
+                            {status === 'stopped' && (
+                                <div>
+                                    <div className="text-gray-500 text-2xl mb-4">⏹️</div>
+                                    <p className="mb-4">Location sharing has been stopped.</p>
+                                    <Button onClick={startLocationSharing} variant="primary" className="w-full">
+                                        <i className="fas fa-play mr-2"></i>
+                                        Start Sharing Again
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </Card>
                 </div>
             );
         };
 
-        // Dashboard Component
-        const Dashboard = ({ user, onLogout }) => {
+        // Main Dashboard Component
+        const Dashboard = ({ user }) => {
             const [children, setChildren] = useState([]);
-            const [selectedChild, setSelectedChild] = useState(null);
-            const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
+            const [locations, setLocations] = useState([]);
             const [activities, setActivities] = useState([]);
-            const [isLoading, setIsLoading] = useState(true);
-            const [error, setError] = useState('');
+            const [showAddModal, setShowAddModal] = useState(false);
+            const [showQRModal, setShowQRModal] = useState(false);
+            const [showEmailModal, setShowEmailModal] = useState(false);
+            const [showSchoolModal, setShowSchoolModal] = useState(false);
+            const [showBackgroundModal, setShowBackgroundModal] = useState(false);
+            const [selectedChild, setSelectedChild] = useState(null);
 
             useEffect(() => {
-                loadDashboardData();
+                loadData();
+                
+                // Set up periodic data refresh
+                const interval = setInterval(loadData, 30000); // Refresh every 30 seconds
+                return () => clearInterval(interval);
             }, [user.id]);
 
-            const loadDashboardData = async () => {
-                try {
-                    setIsLoading(true);
-                    const [userChildren, recentActivities] = await Promise.all([
-                        mockApi.getChildren(user.id),
-                        mockApi.getActivities(user.id, 10)
-                    ]);
-                    
-                    setChildren(userChildren);
-                    setActivities(recentActivities);
-                } catch (err) {
-                    setError('Failed to load dashboard data');
-                    console.error(err);
-                } finally {
-                    setIsLoading(false);
-                }
+            const loadData = () => {
+                setChildren(dataStore.getChildren(user.id));
+                
+                // Load all locations for all children
+                const allChildren = dataStore.getChildren(user.id);
+                const allLocations = [];
+                allChildren.forEach(child => {
+                    const childLocations = dataStore.getLocations(child.id);
+                    allLocations.push(...childLocations);
+                });
+                setLocations(allLocations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+                
+                setActivities(dataStore.getActivities(user.id));
             };
 
-            const handleAddChild = (newChild) => {
-                setChildren([...children, newChild]);
+            const handleAddMember = (child) => {
+                setChildren(dataStore.getChildren(user.id));
+                loadData();
             };
 
-            const handleLogout = async () => {
-                try {
-                    await mockApi.logout();
-                    onLogout();
-                } catch (err) {
-                    console.error('Logout error:', err);
-                }
+            const handleLocationUpdate = (location) => {
+                loadData();
             };
 
-            if (selectedChild) {
-                return (
-                    <ChildDetail
-                        child={selectedChild}
-                        onBack={() => setSelectedChild(null)}
-                    />
-                );
-            }
+            const handleGenerateQR = (child) => {
+                setSelectedChild(child);
+                setShowQRModal(true);
+            };
 
-            if (isLoading) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                            <p className="mt-4 text-gray-600">Loading dashboard...</p>
-                        </div>
-                    </div>
-                );
-            }
+            const handleShareEmail = (child) => {
+                setSelectedChild(child);
+                setShowEmailModal(true);
+            };
+
+            const handleSchoolTracking = (child) => {
+                setSelectedChild(child);
+                setShowSchoolModal(true);
+            };
+
+            const handleBackgroundTracking = (child) => {
+                setSelectedChild(child);
+                setShowBackgroundModal(true);
+            };
 
             return (
                 <div className="min-h-screen bg-gray-50">
-                    {/* Header */}
-                    <header className="bg-white shadow-sm border-b">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex items-center justify-between h-16">
+                    <div className="bg-white shadow-sm border-b">
+                        <div className="max-w-6xl mx-auto px-4 py-4">
+                            <div className="flex justify-between items-center">
                                 <div>
-                                    <h1 className="text-xl font-semibold text-gray-900">
-                                        Family Safety Tracker
-                                    </h1>
-                                    <p className="text-sm text-gray-600">Welcome, {user.name}</p>
+                                    <h1 className="text-2xl font-bold text-gray-900">Family Safety Tracker</h1>
+                                    <p className="text-gray-600">Welcome back, {user.name}!</p>
                                 </div>
-                                <Button variant="outline" onClick={handleLogout}>
-                                    Logout
+                                <Button 
+                                    onClick={() => setShowAddModal(true)}
+                                    variant="primary"
+                                    icon="fas fa-plus"
+                                >
+                                    Add Family Member
                                 </Button>
                             </div>
                         </div>
-                    </header>
+                    </div>
 
-                    {/* Main Content */}
-                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                        {error && (
-                            <Alert type="danger" className="mb-6">
-                                {error}
-                            </Alert>
+                    <div className="max-w-6xl mx-auto px-4 py-6">
+                        {children.length > 0 && (
+                            <MapView children={children} locations={locations} />
                         )}
 
-                        {/* Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <Card className="p-4">
-                                <div className="flex items-center">
-                                    <div className="bg-primary/10 p-3 rounded-lg">
-                                        <span className="text-primary text-lg">👥</span>
-                                    </div>
-                                    <div className="ml-4">
-                                        <p className="text-sm text-gray-600">Total Children</p>
-                                        <p className="text-2xl font-semibold">{children.length}</p>
-                                    </div>
-                                </div>
-                            </Card>
-
-                            <Card className="p-4">
-                                <div className="flex items-center">
-                                    <div className="bg-success/10 p-3 rounded-lg">
-                                        <span className="text-success text-lg">✓</span>
-                                    </div>
-                                    <div className="ml-4">
-                                        <p className="text-sm text-gray-600">Safe</p>
-                                        <p className="text-2xl font-semibold">
-                                            {children.filter(c => c.status === 'safe').length}
-                                        </p>
-                                    </div>
-                                </div>
-                            </Card>
-
-                            <Card className="p-4">
-                                <div className="flex items-center">
-                                    <div className="bg-warning/10 p-3 rounded-lg">
-                                        <span className="text-warning text-lg">📍</span>
-                                    </div>
-                                    <div className="ml-4">
-                                        <p className="text-sm text-gray-600">Active Tracking</p>
-                                        <p className="text-2xl font-semibold">
-                                            {children.filter(c => c.isConnected).length}
-                                        </p>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
-
-                        {/* Children Section */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-semibold">Children</h2>
-                                    <Button onClick={() => setIsAddChildModalOpen(true)}>
-                                        Add Child
-                                    </Button>
-                                </div>
-
-                                {children.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {children.map((child) => (
-                                            <ChildCard
-                                                key={child.id}
-                                                child={child}
-                                                onClick={() => setSelectedChild(child)}
-                                            />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <Card className="p-8 text-center">
-                                        <div className="text-gray-500">
-                                            <p className="text-lg mb-2">No children added yet</p>
-                                            <p className="text-sm mb-4">
-                                                Add your first child to start tracking their location
-                                            </p>
-                                            <Button onClick={() => setIsAddChildModalOpen(true)}>
-                                                Add Your First Child
+                                <h2 className="text-lg font-semibold mb-4">Family Members ({children.length})</h2>
+                                {children.length === 0 ? (
+                                    <Card>
+                                        <div className="p-8 text-center">
+                                            <i className="fas fa-users text-4xl text-gray-400 mb-4"></i>
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">No Family Members Added</h3>
+                                            <p className="text-gray-600 mb-4">Start by adding your family members to track their locations.</p>
+                                            <Button 
+                                                onClick={() => setShowAddModal(true)}
+                                                variant="primary"
+                                                icon="fas fa-plus"
+                                            >
+                                                Add Your First Family Member
                                             </Button>
                                         </div>
                                     </Card>
+                                ) : (
+                                    children.map(child => (
+                                        <FamilyMemberCard
+                                            key={child.id}
+                                            child={child}
+                                            onLocationUpdate={handleLocationUpdate}
+                                            onGenerateQR={handleGenerateQR}
+                                            onShareEmail={handleShareEmail}
+                                            onSchoolTracking={handleSchoolTracking}
+                                            onBackgroundTracking={handleBackgroundTracking}
+                                        />
+                                    ))
                                 )}
                             </div>
 
-                            {/* Recent Activities */}
                             <div>
-                                <h2 className="text-lg font-semibold mb-4">Recent Activities</h2>
-                                <Card className="p-4">
-                                    {activities.length > 0 ? (
-                                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                                            {activities.map((activity) => {
-                                                const child = children.find(c => c.id === activity.childId);
-                                                return (
-                                                    <div key={activity.id} className="flex items-start space-x-3">
-                                                        <div className="bg-blue-100 p-2 rounded-full">
-                                                            <span className="text-blue-600 text-xs">📍</span>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <p className="text-sm font-medium">
-                                                                {child?.name || 'Unknown'} - {activity.type.replace('_', ' ')}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500 mt-1">
-                                                                {activity.description}
-                                                            </p>
-                                                            <p className="text-xs text-gray-400 mt-1">
-                                                                {getTimeDifference(activity.timestamp)}
-                                                            </p>
+                                <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+                                <Card>
+                                    <div className="p-4">
+                                        {activities.length === 0 ? (
+                                            <p className="text-gray-500 text-center py-8">No recent activity</p>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {activities.slice(0, 10).map(activity => (
+                                                    <div key={activity.id} className="border-b border-gray-100 pb-3 last:border-b-0">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <p className="font-medium text-sm">{activity.message}</p>
+                                                                {activity.details && (
+                                                                    <p className="text-xs text-gray-600">{activity.details}</p>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-xs text-gray-500">
+                                                                {formatTime(activity.timestamp)}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center text-gray-500 py-8">
-                                            <p>No recent activities</p>
-                                        </div>
-                                    )}
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </Card>
                             </div>
                         </div>
-                    </main>
+                    </div>
 
-                    {/* Add Child Modal */}
-                    <AddChildModal
-                        isOpen={isAddChildModalOpen}
-                        onClose={() => setIsAddChildModalOpen(false)}
-                        onAdd={handleAddChild}
+                    <AddFamilyMemberModal
+                        isOpen={showAddModal}
+                        onClose={() => setShowAddModal(false)}
+                        onAdd={handleAddMember}
+                        parentId={user.id}
                     />
+
+                    <QRCodeModal
+                        child={selectedChild}
+                        isOpen={showQRModal}
+                        onClose={() => {
+                            setShowQRModal(false);
+                            setSelectedChild(null);
+                        }}
+                    />
+
+                    <EmailShareModal
+                        child={selectedChild}
+                        isOpen={showEmailModal}
+                        onClose={() => {
+                            setShowEmailModal(false);
+                            setSelectedChild(null);
+                        }}
+                    />
+
+                    <SchoolTrackingModal
+                        child={selectedChild}
+                        isOpen={showSchoolModal}
+                        onClose={() => {
+                            setShowSchoolModal(false);
+                            setSelectedChild(null);
+                        }}
+                    />
+
+                    <BackgroundTrackingModal
+                        child={selectedChild}
+                        isOpen={showBackgroundModal}
+                        onClose={() => {
+                            setShowBackgroundModal(false);
+                            setSelectedChild(null);
+                        }}
+                    />
+                </div>
+            );
+        };
+
+        // Login Component
+        const Login = ({ onLogin }) => {
+            const [name, setName] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (name.trim()) {
+                    const user = dataStore.addUser({ name: name.trim() });
+                    onLogin(user);
+                }
+            };
+
+            return (
+                <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+                    <Card className="w-full max-w-md">
+                        <div className="p-8">
+                            <div className="text-center mb-8">
+                                <i className="fas fa-shield-alt text-4xl text-blue-500 mb-4"></i>
+                                <h1 className="text-2xl font-bold text-gray-900">Family Safety Tracker</h1>
+                                <p className="text-gray-600">Keep your family safe with multiple tracking options</p>
+                            </div>
+
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Your Name
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="Enter your name"
+                                        required
+                                    />
+                                </div>
+
+                                <Button type="submit" variant="primary" className="w-full">
+                                    <i className="fas fa-sign-in-alt mr-2"></i>
+                                    Start Tracking
+                                </Button>
+                            </form>
+
+                            <div className="mt-6 pt-6 border-t border-gray-200">
+                                <div className="text-center">
+                                    <p className="text-sm font-medium text-gray-700 mb-3">Available Tracking Methods:</p>
+                                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                        <div className="flex items-center gap-1">
+                                            <i className="fas fa-qrcode"></i>
+                                            <span>QR Code Sharing</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <i className="fas fa-envelope"></i>
+                                            <span>Email Sharing</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <i className="fas fa-satellite-dish"></i>
+                                            <span>Auto Tracking</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <i className="fas fa-globe"></i>
+                                            <span>Browser Tracking</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <i className="fas fa-school"></i>
+                                            <span>School Tracking</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <i className="fas fa-clock"></i>
+                                            <span>Smart Device</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                    <div className="flex items-start gap-2">
+                                        <i className="fas fa-signal text-green-600 mt-1"></i>
+                                        <div className="text-sm">
+                                            <p className="font-medium text-green-800">For Children With Phones (Mobile Data Only):</p>
+                                            <p className="text-green-700">
+                                                Use Background Tracking - works anywhere with mobile signal! You set everything up once on their phone, then it tracks automatically using mobile data. Perfect for school children who can't operate phones!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div className="flex items-start gap-2">
+                                        <i className="fas fa-info-circle text-blue-600 mt-1"></i>
+                                        <div className="text-sm">
+                                            <p className="font-medium text-blue-800">For Children Without Phones:</p>
+                                            <p className="text-blue-700">
+                                                Use School Tracking for schedule-based monitoring, teacher coordination, or pickup/drop-off tracking.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
                 </div>
             );
         };
 
         // Main App Component
         const App = () => {
-            const [currentUser, setCurrentUser] = useState(globalStore.currentUser);
-            const [showRegister, setShowRegister] = useState(false);
+            const [user, setUser] = useState(null);
+            const [isChildTracking, setIsChildTracking] = useState(false);
+            const [trackingChildId, setTrackingChildId] = useState(null);
+            const [trackingChildName, setTrackingChildName] = useState('');
 
-            const handleLogin = () => {
-                setCurrentUser(globalStore.currentUser);
-            };
-
-            const handleRegister = () => {
-                setCurrentUser(globalStore.currentUser);
-            };
-
-            const handleLogout = () => {
-                setCurrentUser(null);
-            };
-
-            // Check for stored user on mount
             useEffect(() => {
-                if (globalStore.currentUser) {
-                    setCurrentUser(globalStore.currentUser);
+                // Check URL parameters for child tracking
+                const urlParams = new URLSearchParams(window.location.search);
+                const childId = urlParams.get('track');
+                const childName = urlParams.get('name');
+                
+                if (childId && childName) {
+                    setIsChildTracking(true);
+                    setTrackingChildId(childId);
+                    setTrackingChildName(decodeURIComponent(childName));
+                    return;
+                }
+
+                // Check if user is already logged in
+                const users = dataStore.data.users;
+                if (users.length > 0) {
+                    setUser(users[0]); // Use the first user for demo
                 }
             }, []);
 
-            if (!currentUser) {
-                return showRegister ? (
-                    <RegisterForm
-                        onRegister={handleRegister}
-                        onSwitchToLogin={() => setShowRegister(false)}
-                    />
-                ) : (
-                    <LoginForm
-                        onLogin={handleLogin}
-                        onSwitchToRegister={() => setShowRegister(true)}
-                    />
-                );
+            const handleLogin = (userData) => {
+                setUser(userData);
+            };
+
+            const handleLogout = () => {
+                setUser(null);
+            };
+
+            if (isChildTracking) {
+                return <ChildTrackingPage childId={trackingChildId} childName={trackingChildName} />;
             }
 
-            return (
-                <AppContext.Provider value={{ currentUser, setCurrentUser }}>
-                    <Dashboard user={currentUser} onLogout={handleLogout} />
-                </AppContext.Provider>
-            );
+            if (!user) {
+                return <Login onLogin={handleLogin} />;
+            }
+
+            return <Dashboard user={user} />;
         };
 
         // Render the app
-        ReactDOM.render(<App />, document.getElementById('root'));
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>

@@ -1,8 +1,8 @@
-# Family Safety Tracker
+# Enhanced Family Safety Tracker
 
 ## Overview
 
-A web-based family safety tracking application that provides real-time location monitoring and safety features for family members. The application uses interactive maps to display family member locations, status updates, and safety alerts in a user-friendly interface.
+A web-based family safety tracking application that allows families to monitor location and safety status of family members in real-time. The application provides interactive mapping, safety status monitoring, emergency features, and QR code sharing capabilities for enhanced family coordination and security.
 
 ## User Preferences
 
@@ -11,52 +11,53 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-- **Single-Page Application (SPA)**: Built using React 18 for component-based UI development
-- **Styling Framework**: Tailwind CSS for utility-first styling with custom CSS variables for consistent theming
-- **JSX Transformation**: Babel standalone for in-browser JSX compilation, enabling rapid development without build tools
-- **Responsive Design**: Mobile-first approach using Tailwind's responsive utilities
+- **Single Page Application (SPA)**: Built with React 18 using UMD builds loaded via CDN
+- **Component-Based Design**: Modular React components for different features (map view, family member cards, emergency features)
+- **Client-Side Rendering**: All rendering happens in the browser with Babel standalone for JSX transformation
+- **Responsive Design**: Tailwind CSS framework for mobile-first responsive layouts
 
-### Map Integration
-- **Mapping Library**: Leaflet.js chosen for lightweight, open-source mapping capabilities
-- **Interactive Features**: Real-time location display with custom markers and popups
-- **Map Tiles**: Utilizes OpenStreetMap tiles for free, reliable map data
+### UI/UX Framework
+- **Styling System**: Tailwind CSS with custom CSS variables for consistent theming
+- **Color Palette**: Predefined design tokens for primary, success, warning, danger, and neutral colors
+- **Component Library**: Custom card components and button styles with gradient backgrounds
+- **Icons**: Font Awesome 6.4.0 for comprehensive icon support
 
-### Client-Side State Management
-- **React State**: Component-level state management using React hooks
-- **Local Storage**: Browser storage for persisting user preferences and temporary data
-- **Real-time Updates**: Event-driven architecture for location updates and safety alerts
+### Mapping and Location Services
+- **Interactive Maps**: Leaflet.js for displaying family member locations with custom markers
+- **Geolocation**: Browser-based location tracking for real-time position updates
+- **Map Customization**: Custom styling with rounded corners and responsive design
 
-### UI/UX Design Patterns
-- **Color System**: Custom CSS variables for consistent theming across primary, success, warning, and danger states
-- **Component Architecture**: Modular React components for reusability and maintainability
-- **Accessibility**: Semantic HTML structure with proper ARIA labels and keyboard navigation support
+### Additional Features
+- **QR Code Generation**: QRCode.js library for generating shareable family group codes
+- **Emergency Systems**: Built-in emergency contact and alert functionality
+- **Safety Status Tracking**: Real-time status updates for family members
+- **School Tracking System**: Specialized tracking options for children without phones
+- **Multiple Device Support**: Smart device, wearable, and shared device tracking options
 
 ### Development Approach
-- **No Build Process**: Direct HTML file with CDN dependencies for simplicity and immediate deployment
-- **Progressive Enhancement**: Core functionality works without JavaScript, enhanced with React components
-- **Cross-Browser Compatibility**: Uses stable, widely-supported library versions
+- **No Build Process**: Direct browser execution without bundling or compilation
+- **CDN Dependencies**: All libraries loaded from CDNs for rapid development
+- **Progressive Enhancement**: Core functionality works without JavaScript, enhanced with interactive features
 
 ## External Dependencies
 
 ### Core Libraries
-- **React 18**: Frontend framework for component-based UI development
-- **React DOM 18**: DOM rendering for React components
-- **Babel Standalone**: In-browser JSX transformation and ES6+ compilation
-
-### Mapping and Geolocation
-- **Leaflet.js 1.9.4**: Open-source mapping library for interactive maps
-- **OpenStreetMap**: Map tile provider for geographic data
+- **React 18**: Frontend framework loaded via unpkg CDN
+- **React DOM 18**: DOM rendering library
+- **Babel Standalone**: JSX transformation in the browser
 
 ### Styling and UI
 - **Tailwind CSS**: Utility-first CSS framework via CDN
-- **Custom CSS Variables**: Theme system for consistent color schemes
+- **Font Awesome 6.4.0**: Icon library for UI elements
 
-### Browser APIs
-- **Geolocation API**: Native browser API for accessing device location
-- **Local Storage API**: Browser storage for data persistence
-- **Notification API**: Browser notifications for safety alerts
+### Mapping and Location
+- **Leaflet 1.9.4**: Interactive mapping library with CSS and JavaScript components
+- **Browser Geolocation API**: Native location services
 
-### CDN Services
-- **unpkg.com**: Package delivery network for npm packages
-- **Tailwind CDN**: CSS framework delivery
-- **Integrity Hashes**: Subresource integrity for security verification of external scripts
+### Utility Libraries
+- **QRCode.js 1.5.3**: QR code generation for sharing family group information
+
+### CDN Strategy
+- All dependencies are loaded from public CDNs (unpkg, cdnjs, cdn.tailwindcss.com)
+- No package management or build system required
+- Optimized for rapid prototyping and development
