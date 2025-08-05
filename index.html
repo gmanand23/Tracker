@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Safety Tracker</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+    
+    <style>
+        :root {
+            --primary: 59 130 246;
+            --success: 34 197 94;
+            --warning: 251 146 60;
+            --danger: 239 68 68;
+            --neutral-50: 250 250 250;
+            --neutral-100: 245 245 245;
+            --neutral-400: 163 163 163;
+            --neutral-900: 23 23 23;
+        }
+        
+        .bg-primary { background-color: rgb(var(--primary)); }
+        .text-primary { color: rgb(var(--primary)); }
+        .bg-primary\/10 { background-color: rgb(var(--primary) / 0.1); }
+        .bg-success { background-color: rgb(var(--success)); }
+        .text-success { color: rgb(var(--success)); }
+        .bg-success\/10 { background-color: rgb(var(--success) / 0.1); }
+        .bg-warning { background-color: rgb(var(--warning)); }
+        .text-warning { color: rgb(var(--warning)); }
+        .bg-warning\/10 { background-color: rgb(var(--warning) / 0.1); }
+        .bg-danger { background-color: rgb(var(--danger)); }
+        .text-danger { color: rgb(var(--danger)); }
+        .bg-danger\/10 { background-color: rgb(var(--danger) / 0.1); }
+        
+        .animate-pulse-slow {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, rgb(59 130 246), rgb(99 102 241));
+        }
+        
+        .leaflet-container {
+            height: 400px;
+            width: 100%;
+            border-radius: 0.75rem;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-safe { background-color: rgb(var(--success)); }
+        .status-warning { background-color: rgb(var(--warning)); }
+        .status-danger { background-color: rgb(var(--danger)); }
+        .status-offline { background-color: rgb(var(--neutral-400)); }
+
+        .card-hover {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef, createContext, useContext } = React;
+        
+        // App Context for global state
+        const AppContext = createContext();
+        
+        // Global data store (simulates database with localStorage persistence)
+        const initializeStore = () => {
+            const stored = localStorage.getItem('familyTrackerData');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    return {
+                        users: data.users || [],
+                        children: data.children || [],
+                        locations: data.locations || [],
+                        activities: data.activities || [],
+                        currentUser: data.currentUser || null,
+                        childConnections: new Map(),
+                    };
+                } catch (e) {
+                    console.error('Error parsing stored data:', e);
+                }
+            }
+            return {
+                users: [],
+                children: [],
+                locations: [],
+                activities: [],
+                currentUser: null,
+                childConnections: new Map(),
+            };
+        };
+
+        const globalStore = initializeStore();
+
+        // Save to localStorage
+        const saveStore = () => {
+            try {
+                const dataToSave = {
+                    users: globalStore.users,
+                    children: globalStore.children,
+                    locations: globalStore.locations,
+                    activities: globalStore.activities,
+                    currentUser: globalStore.currentUser,
+                };
+                localStorage.setItem('familyTrackerData', JSON.stringify(dataToSave));
+            } catch (e) {
+                console.error('Error saving data:', e);
+            }
+        };
+        
+        // Utility functions
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+        
+        const formatTime = (timestamp) => {
+            return new Date(timestamp).toLocaleString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            });
+        };
+        
+        const getTimeDifference = (timestamp) => {
+            const now = new Date();
+            const past = new Date(timestamp);
+            const diffMs = now.getTime() - past.getTime();
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            
+            if (diffMins < 1) return "Just now";
+            if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
+            
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+            
+            const diffDays = Math.floor(diffHours / 24);
+            return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+        };
+        
+        // Location service
+        class LocationService {
+            constructor() {
+                this.watchId = null;
+                this.isWatching = false;
+            }
+
+            async getCurrentLocation() {
+                return new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) {
+                        reject(new Error("Geolocation is not supported by this browser"));
+                        return;
+                    }
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            resolve(position);
+                        },
+                        (error) => {
+                            console.error("Geolocation error:", error);
+                            let errorMessage = "Location access denied";
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    errorMessage = "Location access denied by user";
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    errorMessage = "Location information is unavailable";
+                                    break;
+                                case error.TIMEOUT:
+                                    errorMessage = "Location request timed out";
+                                    break;
+                            }
+                            reject(new Error(errorMessage));
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 15000,
+                            maximumAge: 10000,
+                        }
+                    );
+                });
+            }
+            
+            watchLocation(callback) {
+                if (!navigator.geolocation) {
+                    throw new Error("Geolocation is not supported by this browser");
+                }
+                
+                if (this.isWatching) {
+                    this.stopWatching();
+                }
+
+                this.watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        callback(position);
+                    },
+                    (error) => {
+                        console.error("Location watch error:", error);
+                        callback(null, error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 10000,
+                    }
+                );
+                
+                this.isWatching = true;
+                return this.watchId;
+            }
+            
+            stopWatching() {
+                if (this.watchId) {
+                    navigator.geolocation.clearWatch(this.watchId);
+                    this.watchId = null;
+                    this.isWatching = false;
+                }
+            }
+            
+            async reverseGeocode(lat, lng) {
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error("Failed to reverse geocode");
+                    }
+                    
+                    const data = await response.json();
+                    return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                } catch (error) {
+                    console.error("Reverse geocoding error:", error);
+                    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                }
+            }
+
+            calculateDistance(lat1, lng1, lat2, lng2) {
+                const R = 6371; // Radius of the Earth in kilometers
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                         Math.sin(dLng/2) * Math.sin(dLng/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c; // Distance in kilometers
+            }
+        }
+        
+        const locationService = new LocationService();
+        
+        // API simulation with improved error handling
+        const mockApi = {
+            login: async (email, password) => {
+                try {
+                    const user = globalStore.users.find(u => u.email === email && u.password === password);
+                    if (user) {
+                        globalStore.currentUser = user;
+                        saveStore();
+                        return { user: { id: user.id, email: user.email, name: user.name } };
+                    }
+                    throw new Error("Invalid email or password");
+                } catch (error) {
+                    throw error;
+                }
+            },
+            
+            register: async (userData) => {
+                try {
+                    const existingUser = globalStore.users.find(u => u.email === userData.email);
+                    if (existingUser) {
+                        throw new Error("An account with this email already exists");
+                    }
+                    
+                    const user = {
+                        id: generateId(),
+                        ...userData,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    globalStore.users.push(user);
+                    globalStore.currentUser = user;
+                    saveStore();
+                    return { user: { id: user.id, email: user.email, name: user.name } };
+                } catch (error) {
+                    throw error;
+                }
+            },
+            
+            logout: async () => {
+                globalStore.currentUser = null;
+                saveStore();
+                return true;
+            },
+            
+            getChildren: async (parentId) => {
+                try {
+                    return globalStore.children.filter(child => child.parentId === parentId);
+                } catch (error) {
+                    throw new Error("Failed to fetch children data");
+                }
+            },
+            
+            createChild: async (childData) => {
+                try {
+                    const child = {
+                        id: generateId(),
+                        ...childData,
+                        status: "safe",
+                        lastLocation: null,
+                        lastSeen: new Date().toISOString(),
+                        battery: 100,
+                        speed: 0,
+                        isActive: true,
+                        isConnected: false,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    globalStore.children.push(child);
+                    saveStore();
+                    return child;
+                } catch (error) {
+                    throw new Error("Failed to create child profile");
+                }
+            },
+            
+            updateChild: async (childId, updates) => {
+                try {
+                    const childIndex = globalStore.children.findIndex(child => child.id === childId);
+                    if (childIndex === -1) {
+                        throw new Error("Child not found");
+                    }
+                    
+                    globalStore.children[childIndex] = { ...globalStore.children[childIndex], ...updates };
+                    saveStore();
+                    return globalStore.children[childIndex];
+                } catch (error) {
+                    throw error;
+                }
+            },
+            
+            getChild: async (childId) => {
+                try {
+                    const child = globalStore.children.find(child => child.id === childId);
+                    if (!child) {
+                        throw new Error("Child not found");
+                    }
+                    return child;
+                } catch (error) {
+                    throw error;
+                }
+            },
+            
+            createLocation: async (locationData) => {
+                try {
+                    const location = {
+                        id: generateId(),
+                        ...locationData,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    globalStore.locations.push(location);
+                    
+                    // Update child's last location
+                    const child = globalStore.children.find(c => c.id === locationData.childId);
+                    if (child) {
+                        child.lastLocation = locationData.address || `${locationData.latitude}, ${locationData.longitude}`;
+                        child.lastSeen = new Date().toISOString();
+                        child.status = "safe";
+                        child.battery = locationData.battery || child.battery;
+                        child.speed = locationData.speed || 0;
+                    }
+                    
+                    // Store in global connections for real-time access
+                    globalStore.childConnections.set(locationData.childId, locationData);
+                    saveStore();
+                    
+                    return location;
+                } catch (error) {
+                    throw new Error("Failed to save location data");
+                }
+            },
+            
+            getLocations: async (childId, limit = null) => {
+                try {
+                    let locations = globalStore.locations
+                        .filter(location => location.childId === childId)
+                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    if (limit) {
+                        locations = locations.slice(0, limit);
+                    }
+                    
+                    return locations;
+                } catch (error) {
+                    throw new Error("Failed to fetch location history");
+                }
+            },
+            
+            createActivity: async (activityData) => {
+                try {
+                    const activity = {
+                        id: generateId(),
+                        ...activityData,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    globalStore.activities.push(activity);
+                    saveStore();
+                    return activity;
+                } catch (error) {
+                    throw new Error("Failed to create activity");
+                }
+            },
+            
+            getActivities: async (parentId = null, limit = null) => {
+                try {
+                    let activities = globalStore.activities;
+                    
+                    if (parentId) {
+                        const childIds = globalStore.children
+                            .filter(child => child.parentId === parentId)
+                            .map(child => child.id);
+                        activities = activities.filter(activity => childIds.includes(activity.childId));
+                    }
+                    
+                    activities = activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    if (limit) {
+                        activities = activities.slice(0, limit);
+                    }
+                    
+                    return activities;
+                } catch (error) {
+                    throw new Error("Failed to fetch activities");
+                }
+            },
+            
+            // Child-specific functions
+            connectChild: async (childInfo) => {
+                try {
+                    const child = globalStore.children.find(c => c.id === childInfo.id || c.name === childInfo.name);
+                    if (child) {
+                        child.isConnected = true;
+                        child.deviceInfo = childInfo;
+                        child.lastSeen = new Date().toISOString();
+                        saveStore();
+                        return child;
+                    }
+                    return null;
+                } catch (error) {
+                    throw new Error("Failed to connect child device");
+                }
+            },
+            
+            findChildByContact: async (contactInfo) => {
+                try {
+                    return globalStore.children.find(c => c.contactValue === contactInfo);
+                } catch (error) {
+                    throw new Error("Failed to find child by contact");
+                }
+            }
+        };
+        
+        // UI Components
+        const Button = ({ children, className = "", variant = "default", size = "default", disabled = false, onClick, type = "button", ...props }) => {
+            const baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+            
+            const variants = {
+                default: "bg-primary text-white hover:bg-blue-600 focus:ring-blue-500",
+                secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
+                danger: "bg-danger text-white hover:bg-red-600 focus:ring-red-500",
+                outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500",
+                ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500"
+            };
+            
+            const sizes = {
+                sm: "px-3 py-1.5 text-sm",
+                default: "px-4 py-2 text-sm",
+                lg: "px-6 py-3 text-base"
+            };
+            
+            return (
+                <button
+                    type={type}
+                    className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
+                    disabled={disabled}
+                    onClick={onClick}
+                    {...props}
+                >
+                    {children}
+                </button>
+            );
+        };
+
+        const Input = ({ className = "", type = "text", placeholder, value, onChange, required = false, ...props }) => {
+            return (
+                <input
+                    type={type}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className}`}
+                    placeholder={placeholder}
+                    value={value}
+                    onChange={onChange}
+                    required={required}
+                    {...props}
+                />
+            );
+        };
+
+        const Card = ({ children, className = "", ...props }) => {
+            return (
+                <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`} {...props}>
+                    {children}
+                </div>
+            );
+        };
+
+        const Modal = ({ isOpen, onClose, children, title }) => {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+                    <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full m-4 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between p-4 border-b">
+                            <h3 className="text-lg font-semibold">{title}</h3>
+                            <button
+                                onClick={onClose}
+                                className="text-gray-400 hover:text-gray-600 text-2xl"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="p-4">
+                            {children}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Alert = ({ type = "info", children, className = "" }) => {
+            const types = {
+                success: "bg-success/10 text-success border-success/20",
+                warning: "bg-warning/10 text-warning border-warning/20",
+                danger: "bg-danger/10 text-danger border-danger/20",
+                info: "bg-blue-50 text-blue-700 border-blue-200"
+            };
+
+            return (
+                <div className={`p-3 rounded-md border ${types[type]} ${className}`}>
+                    {children}
+                </div>
+            );
+        };
+
+        // Map Component
+        const MapComponent = ({ children, locations = [], center = [51.505, -0.09], zoom = 13, className = "" }) => {
+            const mapRef = useRef(null);
+            const mapInstanceRef = useRef(null);
+            const markersRef = useRef([]);
+
+            useEffect(() => {
+                if (!mapRef.current) return;
+
+                // Wait for Leaflet to be loaded
+                const initMap = () => {
+                    try {
+                        // Initialize map
+                        mapInstanceRef.current = L.map(mapRef.current, {
+                            zoomControl: true,
+                            scrollWheelZoom: true,
+                        }).setView(center, zoom);
+
+                        // Add tile layer
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 19,
+                        }).addTo(mapInstanceRef.current);
+
+                        // Force map resize after a short delay
+                        setTimeout(() => {
+                            if (mapInstanceRef.current) {
+                                mapInstanceRef.current.invalidateSize();
+                            }
+                        }, 100);
+
+                    } catch (error) {
+                        console.error('Error initializing map:', error);
+                    }
+                };
+
+                // Check if Leaflet is loaded
+                if (typeof L !== 'undefined') {
+                    initMap();
+                } else {
+                    // Wait for Leaflet to load
+                    const checkLeaflet = setInterval(() => {
+                        if (typeof L !== 'undefined') {
+                            clearInterval(checkLeaflet);
+                            initMap();
+                        }
+                    }, 100);
+                }
+
+                return () => {
+                    if (mapInstanceRef.current) {
+                        mapInstanceRef.current.remove();
+                        mapInstanceRef.current = null;
+                    }
+                };
+            }, []);
+
+            useEffect(() => {
+                if (!mapInstanceRef.current) return;
+
+                // Clear existing markers
+                markersRef.current.forEach(marker => {
+                    mapInstanceRef.current.removeLayer(marker);
+                });
+                markersRef.current = [];
+
+                // Add new markers
+                locations.forEach((location, index) => {
+                    try {
+                        const marker = L.marker([location.latitude, location.longitude])
+                            .addTo(mapInstanceRef.current);
+
+                        if (location.address) {
+                            marker.bindPopup(`
+                                <div>
+                                    <strong>${location.childName || 'Unknown'}</strong><br/>
+                                    <small>${location.address}</small><br/>
+                                    <small>${formatTime(location.timestamp)}</small>
+                                </div>
+                            `);
+                        }
+
+                        markersRef.current.push(marker);
+                    } catch (error) {
+                        console.error('Error adding marker:', error);
+                    }
+                });
+
+                // Fit map to show all markers if there are any
+                if (locations.length > 0) {
+                    try {
+                        const group = new L.featureGroup(markersRef.current);
+                        mapInstanceRef.current.fitBounds(group.getBounds().pad(0.1));
+                    } catch (error) {
+                        console.error('Error fitting bounds:', error);
+                    }
+                }
+            }, [locations]);
+
+            useEffect(() => {
+                if (mapInstanceRef.current && center) {
+                    mapInstanceRef.current.setView(center, zoom);
+                }
+            }, [center, zoom]);
+
+            return (
+                <div className={`leaflet-container ${className}`} ref={mapRef}>
+                    {children}
+                </div>
+            );
+        };
+
+        // Authentication Components
+        const LoginForm = ({ onLogin, onSwitchToRegister }) => {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                setError('');
+
+                try {
+                    await mockApi.login(email, password);
+                    onLogin();
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center gradient-bg px-4">
+                    <Card className="w-full max-w-md p-6">
+                        <div className="text-center mb-6">
+                            <h1 className="text-2xl font-bold text-gray-900">Family Safety Tracker</h1>
+                            <p className="text-gray-600 mt-2">Sign in to your account</p>
+                        </div>
+
+                        {error && (
+                            <Alert type="danger" className="mb-4">
+                                {error}
+                            </Alert>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Email
+                                </label>
+                                <Input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter your email"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Password
+                                </label>
+                                <Input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Enter your password"
+                                    required
+                                />
+                            </div>
+
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Signing in...' : 'Sign In'}
+                            </Button>
+                        </form>
+
+                        <div className="mt-4 text-center">
+                            <p className="text-sm text-gray-600">
+                                Don't have an account?{' '}
+                                <button
+                                    onClick={onSwitchToRegister}
+                                    className="text-primary hover:underline"
+                                >
+                                    Sign up
+                                </button>
+                            </p>
+                        </div>
+                    </Card>
+                </div>
+            );
+        };
+
+        const RegisterForm = ({ onRegister, onSwitchToLogin }) => {
+            const [formData, setFormData] = useState({
+                name: '',
+                email: '',
+                password: '',
+                confirmPassword: ''
+            });
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+
+            const handleChange = (e) => {
+                setFormData({
+                    ...formData,
+                    [e.target.name]: e.target.value
+                });
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                setError('');
+
+                if (formData.password !== formData.confirmPassword) {
+                    setError('Passwords do not match');
+                    setIsLoading(false);
+                    return;
+                }
+
+                if (formData.password.length < 6) {
+                    setError('Password must be at least 6 characters long');
+                    setIsLoading(false);
+                    return;
+                }
+
+                try {
+                    await mockApi.register({
+                        name: formData.name,
+                        email: formData.email,
+                        password: formData.password
+                    });
+                    onRegister();
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center gradient-bg px-4">
+                    <Card className="w-full max-w-md p-6">
+                        <div className="text-center mb-6">
+                            <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
+                            <p className="text-gray-600 mt-2">Join Family Safety Tracker</p>
+                        </div>
+
+                        {error && (
+                            <Alert type="danger" className="mb-4">
+                                {error}
+                            </Alert>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Full Name
+                                </label>
+                                <Input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    placeholder="Enter your full name"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Email
+                                </label>
+                                <Input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="Enter your email"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Password
+                                </label>
+                                <Input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Create a password"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Confirm Password
+                                </label>
+                                <Input
+                                    type="password"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="Confirm your password"
+                                    required
+                                />
+                            </div>
+
+                            <Button
+                                type="submit"
+                                className="w-full"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Creating Account...' : 'Create Account'}
+                            </Button>
+                        </form>
+
+                        <div className="mt-4 text-center">
+                            <p className="text-sm text-gray-600">
+                                Already have an account?{' '}
+                                <button
+                                    onClick={onSwitchToLogin}
+                                    className="text-primary hover:underline"
+                                >
+                                    Sign in
+                                </button>
+                            </p>
+                        </div>
+                    </Card>
+                </div>
+            );
+        };
+
+        // Child Components
+        const AddChildModal = ({ isOpen, onClose, onAdd }) => {
+            const [childData, setChildData] = useState({
+                name: '',
+                age: '',
+                contactType: 'phone',
+                contactValue: ''
+            });
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+
+            const handleChange = (e) => {
+                setChildData({
+                    ...childData,
+                    [e.target.name]: e.target.value
+                });
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                setError('');
+
+                try {
+                    const child = await mockApi.createChild({
+                        ...childData,
+                        parentId: globalStore.currentUser.id
+                    });
+                    onAdd(child);
+                    setChildData({
+                        name: '',
+                        age: '',
+                        contactType: 'phone',
+                        contactValue: ''
+                    });
+                    onClose();
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Add Child">
+                    {error && (
+                        <Alert type="danger" className="mb-4">
+                            {error}
+                        </Alert>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Child's Name
+                            </label>
+                            <Input
+                                type="text"
+                                name="name"
+                                value={childData.name}
+                                onChange={handleChange}
+                                placeholder="Enter child's name"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Age
+                            </label>
+                            <Input
+                                type="number"
+                                name="age"
+                                value={childData.age}
+                                onChange={handleChange}
+                                placeholder="Enter age"
+                                min="1"
+                                max="18"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Contact Type
+                            </label>
+                            <select
+                                name="contactType"
+                                value={childData.contactType}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="phone">Phone</option>
+                                <option value="email">Email</option>
+                                <option value="device">Device ID</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Contact Value
+                            </label>
+                            <Input
+                                type={childData.contactType === 'email' ? 'email' : 'text'}
+                                name="contactValue"
+                                value={childData.contactValue}
+                                onChange={handleChange}
+                                placeholder={`Enter ${childData.contactType}`}
+                                required
+                            />
+                        </div>
+
+                        <div className="flex space-x-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="flex-1"
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="flex-1"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Adding...' : 'Add Child'}
+                            </Button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        const ChildCard = ({ child, onClick }) => {
+            const getStatusColor = (status) => {
+                switch (status) {
+                    case 'safe':
+                        return 'status-safe';
+                    case 'warning':
+                        return 'status-warning';
+                    case 'danger':
+                        return 'status-danger';
+                    default:
+                        return 'status-offline';
+                }
+            };
+
+            const getBatteryColor = (battery) => {
+                if (battery > 50) return 'text-success';
+                if (battery > 20) return 'text-warning';
+                return 'text-danger';
+            };
+
+            return (
+                <Card className="p-4 cursor-pointer card-hover" onClick={onClick}>
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold text-lg">{child.name}</h3>
+                        <div className="flex items-center">
+                            <span className={`status-indicator ${getStatusColor(child.status)}`}></span>
+                            <span className="text-sm text-gray-600 capitalize">{child.status}</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center justify-between">
+                            <span>Age:</span>
+                            <span>{child.age} years</span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <span>Last seen:</span>
+                            <span>{getTimeDifference(child.lastSeen)}</span>
+                        </div>
+
+                        {child.lastLocation && (
+                            <div className="flex items-center justify-between">
+                                <span>Location:</span>
+                                <span className="text-right max-w-32 truncate">{child.lastLocation}</span>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between">
+                            <span>Battery:</span>
+                            <span className={`font-medium ${getBatteryColor(child.battery)}`}>
+                                {child.battery}%
+                            </span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <span>Connected:</span>
+                            <span className={child.isConnected ? 'text-success' : 'text-gray-400'}>
+                                {child.isConnected ? 'Yes' : 'No'}
+                            </span>
+                        </div>
+                    </div>
+                </Card>
+            );
+        };
+
+        // Child Detail Component
+        const ChildDetail = ({ child, onBack }) => {
+            const [locations, setLocations] = useState([]);
+            const [activities, setActivities] = useState([]);
+            const [isTracking, setIsTracking] = useState(false);
+            const [currentLocation, setCurrentLocation] = useState(null);
+            const [error, setError] = useState('');
+            const watchIdRef = useRef(null);
+
+            useEffect(() => {
+                loadChildData();
+            }, [child.id]);
+
+            useEffect(() => {
+                return () => {
+                    if (watchIdRef.current) {
+                        locationService.stopWatching();
+                    }
+                };
+            }, []);
+
+            const loadChildData = async () => {
+                try {
+                    const [childLocations, childActivities] = await Promise.all([
+                        mockApi.getLocations(child.id, 20),
+                        mockApi.getActivities(globalStore.currentUser.id, 10)
+                    ]);
+                    
+                    setLocations(childLocations);
+                    setActivities(childActivities.filter(a => a.childId === child.id));
+                } catch (err) {
+                    setError('Failed to load child data');
+                    console.error(err);
+                }
+            };
+
+            const startTracking = async () => {
+                try {
+                    setError('');
+                    setIsTracking(true);
+
+                    // Get initial location
+                    const position = await locationService.getCurrentLocation();
+                    await updateLocation(position);
+
+                    // Start watching location
+                    watchIdRef.current = locationService.watchLocation(async (position, error) => {
+                        if (error) {
+                            console.error('Location watch error:', error);
+                            setError('Location tracking error occurred');
+                            return;
+                        }
+                        
+                        if (position) {
+                            await updateLocation(position);
+                        }
+                    });
+
+                    await mockApi.createActivity({
+                        childId: child.id,
+                        type: 'tracking_started',
+                        description: 'Location tracking started',
+                    });
+
+                } catch (err) {
+                    setError(err.message);
+                    setIsTracking(false);
+                }
+            };
+
+            const stopTracking = async () => {
+                if (watchIdRef.current) {
+                    locationService.stopWatching();
+                    watchIdRef.current = null;
+                }
+
+                setIsTracking(false);
+
+                try {
+                    await mockApi.createActivity({
+                        childId: child.id,
+                        type: 'tracking_stopped',
+                        description: 'Location tracking stopped',
+                    });
+                } catch (err) {
+                    console.error('Error creating stop activity:', err);
+                }
+            };
+
+            const updateLocation = async (position) => {
+                try {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    const speed = position.coords.speed || 0;
+
+                    // Get address
+                    const address = await locationService.reverseGeocode(lat, lng);
+
+                    // Create location record
+                    const locationData = {
+                        childId: child.id,
+                        latitude: lat,
+                        longitude: lng,
+                        accuracy: accuracy,
+                        speed: speed,
+                        address: address,
+                        battery: Math.floor(Math.random() * 40) + 60, // Simulate battery level
+                        childName: child.name
+                    };
+
+                    await mockApi.createLocation(locationData);
+                    setCurrentLocation(locationData);
+
+                    // Reload locations
+                    const updatedLocations = await mockApi.getLocations(child.id, 20);
+                    setLocations(updatedLocations);
+
+                } catch (err) {
+                    console.error('Error updating location:', err);
+                    setError('Failed to update location');
+                }
+            };
+
+            const simulateLocation = async () => {
+                try {
+                    // Generate random location near current position
+                    const baseLat = currentLocation?.latitude || 51.505;
+                    const baseLng = currentLocation?.longitude || -0.09;
+                    
+                    const lat = baseLat + (Math.random() - 0.5) * 0.01;
+                    const lng = baseLng + (Math.random() - 0.5) * 0.01;
+
+                    const address = await locationService.reverseGeocode(lat, lng);
+
+                    const locationData = {
+                        childId: child.id,
+                        latitude: lat,
+                        longitude: lng,
+                        accuracy: Math.random() * 10 + 5,
+                        speed: Math.random() * 5,
+                        address: address,
+                        battery: Math.floor(Math.random() * 40) + 60,
+                        childName: child.name
+                    };
+
+                    await mockApi.createLocation(locationData);
+                    setCurrentLocation(locationData);
+
+                    const updatedLocations = await mockApi.getLocations(child.id, 20);
+                    setLocations(updatedLocations);
+
+                    await mockApi.createActivity({
+                        childId: child.id,
+                        type: 'location_update',
+                        description: `Location updated: ${address}`,
+                    });
+
+                } catch (err) {
+                    setError('Failed to simulate location');
+                    console.error(err);
+                }
+            };
+
+            return (
+                <div className="space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <Button variant="ghost" onClick={onBack}>
+                            ← Back
+                        </Button>
+                        <h1 className="text-2xl font-bold">{child.name}</h1>
+                        <div></div>
+                    </div>
+
+                    {error && (
+                        <Alert type="danger">
+                            {error}
+                        </Alert>
+                    )}
+
+                    {/* Control Panel */}
+                    <Card className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold">Tracking Control</h2>
+                            <div className="flex space-x-2">
+                                <Button
+                                    onClick={isTracking ? stopTracking : startTracking}
+                                    variant={isTracking ? "danger" : "default"}
+                                    disabled={false}
+                                >
+                                    {isTracking ? 'Stop Tracking' : 'Start Tracking'}
+                                </Button>
+                                <Button
+                                    onClick={simulateLocation}
+                                    variant="outline"
+                                >
+                                    Simulate Location
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <span className="text-gray-600">Status:</span>
+                                <div className="flex items-center mt-1">
+                                    <span className={`status-indicator ${child.status === 'safe' ? 'status-safe' : 'status-offline'}`}></span>
+                                    <span className="capitalize">{child.status}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-gray-600">Battery:</span>
+                                <div className="font-semibold mt-1">{child.battery}%</div>
+                            </div>
+                            <div>
+                                <span className="text-gray-600">Last Seen:</span>
+                                <div className="font-semibold mt-1">{getTimeDifference(child.lastSeen)}</div>
+                            </div>
+                            <div>
+                                <span className="text-gray-600">Tracking:</span>
+                                <div className="font-semibold mt-1">
+                                    {isTracking ? (
+                                        <span className="text-success">Active</span>
+                                    ) : (
+                                        <span className="text-gray-400">Inactive</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Map */}
+                    <Card className="p-4">
+                        <h2 className="text-lg font-semibold mb-4">Location Map</h2>
+                        {locations.length > 0 ? (
+                            <MapComponent
+                                locations={locations}
+                                center={locations[0] ? [locations[0].latitude, locations[0].longitude] : [51.505, -0.09]}
+                                zoom={13}
+                            />
+                        ) : (
+                            <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <div className="text-center text-gray-500">
+                                    <p>No location data available</p>
+                                    <p className="text-sm mt-1">Start tracking to see location updates</p>
+                                </div>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* Location History */}
+                    <Card className="p-4">
+                        <h2 className="text-lg font-semibold mb-4">Location History</h2>
+                        {locations.length > 0 ? (
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                {locations.map((location) => (
+                                    <div key={location.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                        <div className="flex-1">
+                                            <div className="text-sm font-medium">{location.address}</div>
+                                            <div className="text-xs text-gray-500">
+                                                Accuracy: {location.accuracy?.toFixed(1)}m
+                                                {location.speed > 0 && ` • Speed: ${location.speed.toFixed(1)} m/s`}
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            {formatTime(location.timestamp)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-gray-500 py-8">
+                                <p>No location history available</p>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* Activities */}
+                    <Card className="p-4">
+                        <h2 className="text-lg font-semibold mb-4">Recent Activities</h2>
+                        {activities.length > 0 ? (
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                {activities.map((activity) => (
+                                    <div key={activity.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                        <div className="flex-1">
+                                            <div className="text-sm font-medium capitalize">
+                                                {activity.type.replace('_', ' ')}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                {activity.description}
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            {formatTime(activity.timestamp)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-gray-500 py-8">
+                                <p>No activities recorded</p>
+                            </div>
+                        )}
+                    </Card>
+                </div>
+            );
+        };
+
+        // Dashboard Component
+        const Dashboard = ({ user, onLogout }) => {
+            const [children, setChildren] = useState([]);
+            const [selectedChild, setSelectedChild] = useState(null);
+            const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
+            const [activities, setActivities] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+            const [error, setError] = useState('');
+
+            useEffect(() => {
+                loadDashboardData();
+            }, [user.id]);
+
+            const loadDashboardData = async () => {
+                try {
+                    setIsLoading(true);
+                    const [userChildren, recentActivities] = await Promise.all([
+                        mockApi.getChildren(user.id),
+                        mockApi.getActivities(user.id, 10)
+                    ]);
+                    
+                    setChildren(userChildren);
+                    setActivities(recentActivities);
+                } catch (err) {
+                    setError('Failed to load dashboard data');
+                    console.error(err);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const handleAddChild = (newChild) => {
+                setChildren([...children, newChild]);
+            };
+
+            const handleLogout = async () => {
+                try {
+                    await mockApi.logout();
+                    onLogout();
+                } catch (err) {
+                    console.error('Logout error:', err);
+                }
+            };
+
+            if (selectedChild) {
+                return (
+                    <ChildDetail
+                        child={selectedChild}
+                        onBack={() => setSelectedChild(null)}
+                    />
+                );
+            }
+
+            if (isLoading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm border-b">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex items-center justify-between h-16">
+                                <div>
+                                    <h1 className="text-xl font-semibold text-gray-900">
+                                        Family Safety Tracker
+                                    </h1>
+                                    <p className="text-sm text-gray-600">Welcome, {user.name}</p>
+                                </div>
+                                <Button variant="outline" onClick={handleLogout}>
+                                    Logout
+                                </Button>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                        {error && (
+                            <Alert type="danger" className="mb-6">
+                                {error}
+                            </Alert>
+                        )}
+
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <Card className="p-4">
+                                <div className="flex items-center">
+                                    <div className="bg-primary/10 p-3 rounded-lg">
+                                        <span className="text-primary text-lg">👥</span>
+                                    </div>
+                                    <div className="ml-4">
+                                        <p className="text-sm text-gray-600">Total Children</p>
+                                        <p className="text-2xl font-semibold">{children.length}</p>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <Card className="p-4">
+                                <div className="flex items-center">
+                                    <div className="bg-success/10 p-3 rounded-lg">
+                                        <span className="text-success text-lg">✓</span>
+                                    </div>
+                                    <div className="ml-4">
+                                        <p className="text-sm text-gray-600">Safe</p>
+                                        <p className="text-2xl font-semibold">
+                                            {children.filter(c => c.status === 'safe').length}
+                                        </p>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <Card className="p-4">
+                                <div className="flex items-center">
+                                    <div className="bg-warning/10 p-3 rounded-lg">
+                                        <span className="text-warning text-lg">📍</span>
+                                    </div>
+                                    <div className="ml-4">
+                                        <p className="text-sm text-gray-600">Active Tracking</p>
+                                        <p className="text-2xl font-semibold">
+                                            {children.filter(c => c.isConnected).length}
+                                        </p>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* Children Section */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-semibold">Children</h2>
+                                    <Button onClick={() => setIsAddChildModalOpen(true)}>
+                                        Add Child
+                                    </Button>
+                                </div>
+
+                                {children.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {children.map((child) => (
+                                            <ChildCard
+                                                key={child.id}
+                                                child={child}
+                                                onClick={() => setSelectedChild(child)}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <Card className="p-8 text-center">
+                                        <div className="text-gray-500">
+                                            <p className="text-lg mb-2">No children added yet</p>
+                                            <p className="text-sm mb-4">
+                                                Add your first child to start tracking their location
+                                            </p>
+                                            <Button onClick={() => setIsAddChildModalOpen(true)}>
+                                                Add Your First Child
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                )}
+                            </div>
+
+                            {/* Recent Activities */}
+                            <div>
+                                <h2 className="text-lg font-semibold mb-4">Recent Activities</h2>
+                                <Card className="p-4">
+                                    {activities.length > 0 ? (
+                                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                                            {activities.map((activity) => {
+                                                const child = children.find(c => c.id === activity.childId);
+                                                return (
+                                                    <div key={activity.id} className="flex items-start space-x-3">
+                                                        <div className="bg-blue-100 p-2 rounded-full">
+                                                            <span className="text-blue-600 text-xs">📍</span>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-medium">
+                                                                {child?.name || 'Unknown'} - {activity.type.replace('_', ' ')}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {activity.description}
+                                                            </p>
+                                                            <p className="text-xs text-gray-400 mt-1">
+                                                                {getTimeDifference(activity.timestamp)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-gray-500 py-8">
+                                            <p>No recent activities</p>
+                                        </div>
+                                    )}
+                                </Card>
+                            </div>
+                        </div>
+                    </main>
+
+                    {/* Add Child Modal */}
+                    <AddChildModal
+                        isOpen={isAddChildModalOpen}
+                        onClose={() => setIsAddChildModalOpen(false)}
+                        onAdd={handleAddChild}
+                    />
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const [currentUser, setCurrentUser] = useState(globalStore.currentUser);
+            const [showRegister, setShowRegister] = useState(false);
+
+            const handleLogin = () => {
+                setCurrentUser(globalStore.currentUser);
+            };
+
+            const handleRegister = () => {
+                setCurrentUser(globalStore.currentUser);
+            };
+
+            const handleLogout = () => {
+                setCurrentUser(null);
+            };
+
+            // Check for stored user on mount
+            useEffect(() => {
+                if (globalStore.currentUser) {
+                    setCurrentUser(globalStore.currentUser);
+                }
+            }, []);
+
+            if (!currentUser) {
+                return showRegister ? (
+                    <RegisterForm
+                        onRegister={handleRegister}
+                        onSwitchToLogin={() => setShowRegister(false)}
+                    />
+                ) : (
+                    <LoginForm
+                        onLogin={handleLogin}
+                        onSwitchToRegister={() => setShowRegister(true)}
+                    />
+                );
+            }
+
+            return (
+                <AppContext.Provider value={{ currentUser, setCurrentUser }}>
+                    <Dashboard user={currentUser} onLogout={handleLogout} />
+                </AppContext.Provider>
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
